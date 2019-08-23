@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"math/rand"
 	"net/http"
 	"net/http/httputil"
@@ -30,5 +31,5 @@ func main() {
 			Host:   "localhost:9092",
 		},
 	})
-	http.ListenAndServe(":9090", proxy)
+	log.Fatal(http.ListenAndServe(":9090", proxy))
 }
