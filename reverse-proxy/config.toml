@@ -1,0 +1,9 @@
+[[API]]
+Host     = "localhost:9091"
+Scheme   = "http"
+Endpoint = "api.example.com"
+
+[[API]]
+Host     = "localhost:9092"
+Scheme   = "http"
+Endpoint = "api.example.com"

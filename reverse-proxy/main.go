@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"github.com/BurntSushi/toml"
 	"log"
 	"math/rand"
 	"net/http"
@@ -8,9 +10,19 @@ import (
 	"net/url"
 )
 
+type APIConfig struct {
+	Endpoint string
+	Scheme string
+	Host string
+}
+
+type Config struct {
+	API []url.URL
+}
+
 // NewMultipleHostReverseProxy creates a reverse proxy that will randomly
 // select a host from the passed `targets`
-func NewMultipleHostReverseProxy(targets []*url.URL) *httputil.ReverseProxy {
+func NewMultipleHostReverseProxy(targets []url.URL) *httputil.ReverseProxy {
 	director := func(req *http.Request) {
 		target := targets[rand.Int()%len(targets)]
 		req.URL.Scheme = target.Scheme
@@ -21,15 +33,13 @@ func NewMultipleHostReverseProxy(targets []*url.URL) *httputil.ReverseProxy {
 }
 
 func main() {
-	proxy := NewMultipleHostReverseProxy([]*url.URL{
-		{
-			Scheme: "http",
-			Host:   "localhost:9091",
-		},
-		{
-			Scheme: "http",
-			Host:   "localhost:9092",
-		},
-	})
+	var config Config
+	
+	_, err := toml.DecodeFile("config.toml",&config)
+	if err != nil {
+		fmt.Errorf("toml decode Error: %v", err)
+	}
+
+	proxy := NewMultipleHostReverseProxy(config.API)
 	log.Fatal(http.ListenAndServe(":9090", proxy))
 }
