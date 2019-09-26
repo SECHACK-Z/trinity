@@ -1,0 +1,6 @@
+targets:
+  - proxy: "localhost:9091"
+    host: "server1.com"
+    default: true
+  - proxy: "localhost:9092"
+    host: "server2.com"
