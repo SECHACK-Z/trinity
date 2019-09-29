@@ -31,7 +31,6 @@ type Config struct {
 // select a host from the passed `targets`
 func NewMultipleHostReverseProxy(config Config) *httputil.ReverseProxy {
 	director := func(req *http.Request) {
-		fmt.Printf("%+v", req)
 		for _, target := range config.Targets {
 			if req.Host == target.Host {
 				req.URL.Scheme = "http"
