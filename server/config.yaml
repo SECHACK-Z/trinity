@@ -1,6 +1,7 @@
 targets:
   - proxy: "localhost:9091"
-    host: "server1.com"
+    host: "a.sechack-z.org"
+    https: true
     default: true
   - proxy: "localhost:9092"
-    host: "server2.com"
+    host: "b.sechack-z.org"

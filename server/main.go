@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"golang.org/x/crypto/acme/autocert"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
@@ -17,6 +18,8 @@ import (
 type Target struct {
 	Proxy string
 	Host string
+	Https bool
+	ForceHttps bool
 	Default bool
 }
 
@@ -28,6 +31,7 @@ type Config struct {
 // select a host from the passed `targets`
 func NewMultipleHostReverseProxy(config Config) *httputil.ReverseProxy {
 	director := func(req *http.Request) {
+		fmt.Printf("%+v", req)
 		for _, target := range config.Targets {
 			if req.Host == target.Host {
 				req.URL.Scheme = "http"
@@ -74,5 +78,16 @@ func main() {
 			fmt.Fprintln(os.Stderr, err)
 		}
 	}()
-	log.Fatal(http.ListenAndServe(":9090", proxy))
+
+	httpsHosts := make([]string, 0)
+	for _, target := range config.Targets {
+		if target.Https {
+			httpsHosts = append(httpsHosts, target.Host)
+		}
+	}
+
+	go func () {
+		log.Fatal(http.Serve(autocert.NewListener(httpsHosts...), proxy))
+	}()
+	log.Fatal(http.ListenAndServe(":80", proxy))
 }
