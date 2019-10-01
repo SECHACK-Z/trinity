@@ -1,21 +1,19 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"os"
-	"strings"
+	"time"
 
 	"gopkg.in/yaml.v2"
 
 	_ "main/statik"
 
 	"github.com/rakyll/statik/fs"
-	"github.com/ymotongpoo/goltsv"
 )
 
 type Target struct {
@@ -28,29 +26,48 @@ type Config struct {
 	Targets []Target
 }
 
-func accessLog(req *http.Request) {
-	log.Println(req)
-	remoteAddr := strings.Split(req.RemoteAddr, ":")[0]
-	logData := []map[string]string{{
-		"remote_addr":    remoteAddr,
-		"request_method": req.Method,
-		"request_uri":    req.RequestURI,
-		// "https":           "aa",
-		// "uri":             "aa",
-		// "query_strings":   "aa",
-		// "status":          "aa",
-		// "bytes_sent":      "aa",
-		// "body_bytes_sent": "aa",
-	}}
+func accessLog(res *http.Request) error {
+	log.Println(res)
+	//remoteAddr := strings.Split(req.RemoteAddr, ":")[0]
 
-	b := &bytes.Buffer{}
-	writer := goltsv.NewWriter(b)
-	err := writer.WriteAll(logData)
+	// time:2015-09-06T05:58:05+09:00	method:POST	uri:/foo/bar?token=xxx&uuid=1234	status:200	size:12	apptime:0.057
+	// logData := []map[string]string{{
+	// 	"time": time.Now().Format("2006-01-02T15:04:05+09:00"),
+	// 	//"remote_addr": remoteAddr,
+	// 	"method":      req.Method,
+	// 	"request_uri": req.RequestURI,
+	// 	"status":      "200",
+	// 	"size":        string(req.ContentLength),
+	// 	"apptime":     "-",
+	// 	// "uri":             "aa",
+	// 	// "query_strings":   "aa",
+	// 	// "status":          "aa",
+	// 	// "bytes_sent":      "aa",
+	// 	// "body_bytes_sent": "aa",
+	// }}
+	format := "time:%v\tmethod:%v\turi:%v\tstatus:200\tsize:%v\tapptime:0.100\n"
+	logData := fmt.Sprintf(format, time.Now().Format("2006-01-02T15:04:05+09:00"), res.Method, res.RequestURI, len(res.RequestURI))
+
+	// b := &bytes.Buffer{}
+	// writer := goltsv.NewWriter(b)
+	// err := writer.WriteAll(logData)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// log.Println(b.String())
+	file, err := os.OpenFile(`./logFile`, os.O_APPEND|os.O_WRONLY, 0600)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Println(b.String())
+	defer file.Close()
+	file.WriteString(logData)
+	return nil
 }
+
+// func modifier(res *http.Response) error {
+// 	fmt.Println(res)
+// 	return nil
+// }
 
 // NewMultipleHostReverseProxy creates a reverse proxy that will randomly
 // select a host from the passed `targets`
@@ -76,6 +93,7 @@ func NewMultipleHostReverseProxy(config Config) *httputil.ReverseProxy {
 			}
 		}
 	}
+	// return &httputil.ReverseProxy{Director: director, ModifyResponse: modifier}
 	return &httputil.ReverseProxy{Director: director}
 }
 
