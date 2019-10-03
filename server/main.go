@@ -13,6 +13,7 @@ import (
 	_ "main/statik"
 
 	"github.com/rakyll/statik/fs"
+	"github.com/labstack/echo/v4"
 )
 
 type Target struct {
@@ -67,13 +68,19 @@ func main() {
 
 	proxy := NewMultipleHostReverseProxy(config)
 	go func () {
+		e := echo.New()
 		statikFs, err := fs.New()
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			return
 		}
-		http.Handle("/", http.FileServer(statikFs))
-		if err := http.ListenAndServe(":8080", nil); err != nil {
+		e.GET("/api/ping", func (c echo.Context) error {
+			return c.String(http.StatusOK, "pong")
+		})
+
+		e.GET("/", echo.WrapHandler(http.FileServer(statikFs)))
+
+		if err := e.Start(":8080"); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 		}
 	}()
