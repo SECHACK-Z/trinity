@@ -1,7 +1,8 @@
 import Vue from "vue";
 import Router from "vue-router";
 import Home from "./views/Home.vue";
-
+import Alp from "./views/Alp.vue";
+import Log from "./views/Log.vue";
 Vue.use(Router);
 
 export default new Router({
@@ -19,6 +20,16 @@ export default new Router({
       // which is lazy-loaded when the route is visited.
       component: () =>
         import(/* webpackChunkName: "about" */ "./views/About.vue")
+    },
+    {
+      path:"/alp",
+      name: "alp",
+      component:Alp
+    },
+    {
+      path:"/log",
+      name:"log",
+      component: Log
     }
   ]
 });

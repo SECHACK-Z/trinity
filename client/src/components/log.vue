@@ -13,7 +13,26 @@
 import Vue from 'vue';
 import { Network } from 'vue2vis';
 import axios from 'axios';
-
+type logData = {
+    method: string
+    uri: string
+}
+type resultType = {
+    uri:string
+    count:number
+}
+type nodeType = {
+    id:number
+    value: number //nodeの大きさ
+    label: string
+    x: number
+    y: number
+}
+type edgeType = {
+    from: number
+    to : number
+    value: number
+}
 export default Vue.component('Log',{
     template: "#mytmp",
     components: {
@@ -54,34 +73,15 @@ export default Vue.component('Log',{
         }
     },
     mounted(){
-        type logData = {
-            method: string
-            uri: string
-        }
-        type resultType = {
-            uri:string
-            count:number
-        }
-        type nodeType = {
-            id:number
-            value: number //nodeの大きさ
-            label: string
-            x: number
-            y: number
-        }
-        type edgeType = {
-            from: number
-            to : number
-            value: number
-        }
-        function getRandomInt(max) {
+        
+        const  getRandomInt= (max:number) => {
             return Math.floor(Math.random() * Math.floor(max));
         }
         axios.get('/api/log').then(response => {
             console.log(response.data)
-
+            const data = JSON.parse(response.data)
             const results : Array<resultType> = [];
-            response.data.forEach(d => {
+            data.forEach(d => {
                 const result = results.find((r) => r.uri === d.uri);
                 if (result) {
                     result.count ++; // count

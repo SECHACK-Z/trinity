@@ -16,7 +16,7 @@
     </v-app-bar>
 
     <v-content app>
-      <Log />
+        <router-view></router-view>
     </v-content>
   </v-app>
 </template>
