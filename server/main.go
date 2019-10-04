@@ -107,7 +107,7 @@ func main() {
 		})
 
 		e.GET("/", echo.WrapHandler(http.FileServer(statikFs)))
-		e.GET("/log", func(c echo.Context) error {
+		e.GET("/api/log", func(c echo.Context) error {
 			//デモ用の実装
 			return c.JSON(200, Logs)
 		})
