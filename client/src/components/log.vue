@@ -1,17 +1,18 @@
 
 <template id="mytmp">
-  <div>
-    <Network id="mynetwork"
+  <v-container>
+    <Network 
     :nodes="nodes"
     :edges="edges"
     :options="options" />
-  </div>
+  </v-container>
 </template>
 
 
 <script lang="ts">
 import Vue from 'vue';
 import { Network } from 'vue2vis';
+import axios from 'axios';
 
 export default Vue.component('Log',{
     template: "#mytmp",
@@ -22,19 +23,14 @@ export default Vue.component('Log',{
         return {
         network: null,
         nodes: [
-            { id: 1, value: 5, label: "" },
-            { id: 2, value: 5, label: "/Service/1" },
-            { id: 3, value: 5, label: "/Service/2" },
-            { id: 4, value: 5, label: "/Service/3" },
-            { id: 5, value: 5, label: "/Service/4" },
+            { id: 0, value: 5, label: "" ,x:100,y:200},
         ],
         edges: [
-            { from: 1, to: 2, value: 7, title: "" },
-            { from: 1, to: 3, value: 10, title: "" },
-            { from: 1, to: 4, value: 8, title: "" },
-            { from: 1, to: 5, value: 9, title: "" },
+            
         ],
         options: {
+            width: "800px",
+            height: "800px",
             nodes: {
             shape: "dot",
             scaling: {
@@ -43,12 +39,73 @@ export default Vue.component('Log',{
                 max: 20
                 }
             }
-            }
+            },
+            edges: {
+                smooth: false
+            },
+            physics: false,
+            interaction: {
+                dragNodes: false,// do not allow dragging nodes
+                zoomView: false, // do not allow zooming
+                dragView: false  // do not allow dragging
+            },
         },
         container: null
         }
     },
     mounted(){
+        type logData = {
+            method: string
+            uri: string
+        }
+        type resultType = {
+            uri:string
+            count:number
+        }
+        type nodeType = {
+            id:number
+            value: number //nodeの大きさ
+            label: string
+            x: number
+            y: number
+        }
+        type edgeType = {
+            from: number
+            to : number
+            value: number
+        }
+        function getRandomInt(max) {
+            return Math.floor(Math.random() * Math.floor(max));
+        }
+        axios.get('/api/log').then(response => {
+            console.log(response.data)
+
+            const results : Array<resultType> = [];
+            response.data.forEach(d => {
+                const result = results.find((r) => r.uri === d.uri);
+                if (result) {
+                    result.count ++; // count
+                } else {
+                    results.push({
+                    uri: d.uri,
+                    count: 1,
+                    });
+                }
+            });
+
+            console.log(results)
+
+            const edges : edgeType[] = [];
+            const nodes : nodeType[] = [{id:0, label:" ", value:5, x:-100, y:240}];
+            results.map((r, i) => {
+                nodes.push({id:i+1, label:r.uri, value:5,x:150, y:80*i })
+                edges.push({from:i+1,to:0,value:r.count})
+            })
+            this.nodes = nodes;
+            this.edges = edges;
+        })
+
+
         // let container = document.getElementById('mynetwork');
         // var data = {
         //     nodes: this.nodes,
