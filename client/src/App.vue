@@ -15,7 +15,7 @@
       </v-btn>
     </v-app-bar>
 
-    <v-content>
+    <v-content app>
       <Log />
     </v-content>
   </v-app>
