@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -109,10 +108,7 @@ func main() {
 
 		e.GET("/", echo.WrapHandler(http.FileServer(statikFs)))
 		e.GET("/log", func(c echo.Context) error {
-			_, err := json.Marshal(Logs)
-			if err != nil {
-				return c.String(http.StatusInternalServerError, "json marshal error")
-			}
+			//デモ用の実装
 			return c.JSON(200, Logs)
 		})
 		if err := e.Start(":8080"); err != nil {
