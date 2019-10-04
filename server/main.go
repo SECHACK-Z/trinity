@@ -113,7 +113,9 @@ func main() {
 			return c.String(http.StatusOK, "pong")
 		})
 
-		e.GET("/", echo.WrapHandler(http.FileServer(statikFs)))
+		h := http.FileServer(statikFs)
+
+		e.GET("/*", echo.WrapHandler(http.StripPrefix("/", h)))
 		e.GET("/api/log", func(c echo.Context) error {
 			//デモ用の実装
 			data, err := ioutil.ReadFile(`logFile`)
