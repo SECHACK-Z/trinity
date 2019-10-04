@@ -1,31 +1,22 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"os"
-	"strconv"
 )
 
 var (
-	port string
+	message = os.Getenv("MESSAGE")
 )
 
-func main() {
-	if len(os.Args) != 2 {
-		log.Fatalf("Usage: %s <port>", os.Args[0])
-	}
-	if _, err := strconv.Atoi(os.Args[1]); err != nil {
-		log.Fatalf("Invalid port: %s (%s)\n", os.Args[1], err)
-	}
 
-	port = os.Args[1]
+func main() {
 	http.HandleFunc("/", Handler)
-	http.ListenAndServe(":"+port, nil)
+	http.ListenAndServe(":8080", nil)
 }
 
 // Handler returns port and requested path
 func Handler(w http.ResponseWriter, req *http.Request) {
-	println("----> :"+os.Args[1], req.URL.String())
-	w.Write([]byte(port))
+	println("----> :", req.URL.String())
+	w.Write([]byte(message + "\n"))
 }
