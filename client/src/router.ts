@@ -22,13 +22,13 @@ export default new Router({
         import(/* webpackChunkName: "about" */ "./views/About.vue")
     },
     {
-      path:"/alp",
+      path: "/alp",
       name: "alp",
-      component:Alp
+      component: Alp
     },
     {
-      path:"/log",
-      name:"log",
+      path: "/log",
+      name: "log",
       component: Log
     }
   ]

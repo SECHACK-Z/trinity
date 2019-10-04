@@ -16,22 +16,22 @@
     </v-app-bar>
 
     <v-content app>
-        <router-view></router-view>
+      <router-view></router-view>
     </v-content>
   </v-app>
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
-import Log from './components/log.vue';
+import Vue from "vue";
+import Log from "./components/log.vue";
 
 export default Vue.extend({
-  name: 'App',
+  name: "App",
   components: {
     Log
   },
   data: () => ({
     //
-  }),
+  })
 });
 </script>

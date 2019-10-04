@@ -1,15 +1,15 @@
 <template>
-    <Log />
+  <Log />
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
-import Log from '../components/log.vue';
+import Vue from "vue";
+import Log from "../components/log.vue";
 
 export default Vue.extend({
-    components:{
-        Log
-    },
-    data: () => ({}),
+  components: {
+    Log
+  },
+  data: () => ({})
 });
 </script>
