@@ -1,12 +1,16 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"os"
+	"os/exec"
+	"time"
 
 	"golang.org/x/crypto/acme/autocert"
 	"gopkg.in/yaml.v2"
@@ -15,6 +19,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/rakyll/statik/fs"
+	"github.com/ymotongpoo/goltsv"
 )
 
 type Target struct {
@@ -37,21 +42,23 @@ type LogType struct {
 var Logs []LogType
 
 func accessLog(res *http.Request) error {
-	//format := "time:%v\tmethod:%v\turi:%v\tstatus:200\tsize:%v\tapptime:0.100\n"
-	//logData := fmt.Sprintf(format, time.Now().Format("2006-01-02T15:04:05+09:00"), res.Method, res.RequestURI, len(res.RequestURI))
 
-	format := "{method:\"%v\", uri:\"%v\"},\n"
+	//format := "{method:\"%v\", uri:\"%v\"},\n"
 	l := LogType{
 		Method: res.Method,
 		URI:    res.RequestURI,
 	}
 	Logs = append(Logs, l)
-	logData := fmt.Sprintf(format, res.Method, res.RequestURI)
+
+	format := "time:%v\tmethod:%v\turi:%v\tstatus:200\tsize:10\tapptime:0.100\n"
+	logData := fmt.Sprintf(format, time.Now().Format("2006-01-02T15:04:05+09:00"), res.Method, res.RequestURI)
+	fmt.Println(logData)
 	file, err := os.OpenFile(`./logFile`, os.O_APPEND|os.O_WRONLY, 0600)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer file.Close()
+
 	file.WriteString(logData)
 	return nil
 }
@@ -109,7 +116,22 @@ func main() {
 		e.GET("/", echo.WrapHandler(http.FileServer(statikFs)))
 		e.GET("/api/log", func(c echo.Context) error {
 			//デモ用の実装
-			return c.JSON(200, Logs)
+			data, err := ioutil.ReadFile(`logFile`)
+			if err != nil {
+				log.Println(err)
+			}
+			b := bytes.NewBufferString(string(data))
+			reader := goltsv.NewReader(b)
+			records, _ := reader.ReadAll()
+			bytes, _ := json.Marshal(records)
+			return c.JSON(200, string(bytes))
+		})
+		e.GET("/api/alp", func(c echo.Context) error {
+			out, err := exec.Command("sh", "-c", "cat logFile | alp --sort=max ltsv").Output()
+			if err != nil {
+				log.Fatal(err.Error())
+			}
+			return c.String(200, string(out))
 		})
 		if err := e.Start(":8080"); err != nil {
 			fmt.Fprintln(os.Stderr, err)
