@@ -41,17 +41,17 @@ type LogType struct {
 
 var Logs []LogType
 
-func accessLog(res *http.Request) error {
+func accessLog(req *http.Request) error {
 
 	//format := "{method:\"%v\", uri:\"%v\"},\n"
 	l := LogType{
-		Method: res.Method,
-		URI:    res.RequestURI,
+		Method: req.Method,
+		URI:    req.RequestURI,
 	}
 	Logs = append(Logs, l)
 
 	format := "time:%v\tmethod:%v\turi:%v\tstatus:200\tsize:10\tapptime:0.100\n"
-	logData := fmt.Sprintf(format, time.Now().Format("2006-01-02T15:04:05+09:00"), res.Method, res.RequestURI)
+	logData := fmt.Sprintf(format, time.Now().Format("2006-01-02T15:04:05+09:00"), req.Method, req.Host+req.RequestURI)
 	fmt.Println(logData)
 	file, err := os.OpenFile(`./logFile`, os.O_APPEND|os.O_WRONLY, 0600)
 	if err != nil {
@@ -78,9 +78,9 @@ func NewMultipleHostReverseProxy(config Config) *httputil.ReverseProxy {
 
 		for _, target := range config.Targets {
 			if target.Default {
+				accessLog(req)
 				req.URL.Scheme = "http"
 				req.URL.Host = target.Proxy
-				accessLog(req)
 				log.Printf("proxy to %s\n", target.Proxy)
 				return
 			}
