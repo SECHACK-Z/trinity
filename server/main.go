@@ -68,7 +68,7 @@ func accessLog(res *http.Response) error {
 		URI:    res.Request.RequestURI,
 	}
 	fmt.Println("accessLog")
-	fmt.Println(l)
+	fmt.Println(getToken(res.Request.Context()))
 	Logs = append(Logs, l)
 	format := "time:%v\tmethod:%v\turi:%v\tstatus:200\tsize:10\tapptime:0.100\n"
 	logData := fmt.Sprintf(format, time.Now().Format("2006-01-02T15:04:05+09:00"), res.Request.Method, res.Request.Host+res.Request.RequestURI)
@@ -90,11 +90,13 @@ func NewMultipleHostReverseProxy(config Config) *httputil.ReverseProxy {
 	director := func(req *http.Request) {
 		for _, target := range config.Targets {
 			if req.Host == target.Host {
-				fmt.Println(req)
-				ctx := setToken(req.Context(), time.Now())
+				fmt.Println("93:", req)
+				ctx := req.Context()
+				ctx = setToken(req.Context(), time.Now())
 				req = req.WithContext(ctx)
 				req.URL.Scheme = "http"
 				req.URL.Host = target.Proxy
+				fmt.Println(req.URL.Scheme)
 				log.Printf("proxy to %s\n", target.Proxy)
 				return
 			}
@@ -102,9 +104,8 @@ func NewMultipleHostReverseProxy(config Config) *httputil.ReverseProxy {
 
 		for _, target := range config.Targets {
 			if target.Default {
-				fmt.Println(req)
-				ctx := req.Context()
-				ctx = context.WithValue(ctx, "time", time.Now())
+				fmt.Println("105:", req)
+				ctx := setToken(req.Context(), time.Now())
 				req = req.WithContext(ctx)
 				req.URL.Scheme = "http"
 				req.URL.Host = target.Proxy
