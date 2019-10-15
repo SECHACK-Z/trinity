@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -41,17 +42,36 @@ type LogType struct {
 
 var Logs []LogType
 
-func accessLog(req *http.Request) error {
+type contextKey string
+
+const tokenContextKey contextKey = "requestTime"
+
+func setToken(parents context.Context, t time.Time) context.Context {
+	return context.WithValue(parents, tokenContextKey, t)
+}
+func getToken(ctx context.Context) (time.Time, error) {
+	v := ctx.Value(tokenContextKey)
+	token, ok := v.(time.Time)
+	if !ok {
+		return time.Now(), fmt.Errorf("token not found")
+	}
+	return token, nil
+}
+
+func accessLog(res *http.Response) error {
 
 	//format := "{method:\"%v\", uri:\"%v\"},\n"
 	l := LogType{
-		Method: req.Method,
-		URI:    req.RequestURI,
+		// Method: req.Method,
+		// URI:    req.RequestURI,
+		Method: res.Request.Method,
+		URI:    res.Request.RequestURI,
 	}
+	fmt.Println("accessLog")
+	fmt.Println(l)
 	Logs = append(Logs, l)
-
 	format := "time:%v\tmethod:%v\turi:%v\tstatus:200\tsize:10\tapptime:0.100\n"
-	logData := fmt.Sprintf(format, time.Now().Format("2006-01-02T15:04:05+09:00"), req.Method, req.Host+req.RequestURI)
+	logData := fmt.Sprintf(format, time.Now().Format("2006-01-02T15:04:05+09:00"), res.Request.Method, res.Request.Host+res.Request.RequestURI)
 	fmt.Println(logData)
 	file, err := os.OpenFile(`./logFile`, os.O_APPEND|os.O_WRONLY, 0600)
 	if err != nil {
@@ -66,9 +86,13 @@ func accessLog(req *http.Request) error {
 // NewMultipleHostReverseProxy creates a reverse proxy that will randomly
 // select a host from the passed `targets`
 func NewMultipleHostReverseProxy(config Config) *httputil.ReverseProxy {
+
 	director := func(req *http.Request) {
 		for _, target := range config.Targets {
 			if req.Host == target.Host {
+				fmt.Println(req)
+				ctx := setToken(req.Context(), time.Now())
+				req = req.WithContext(ctx)
 				req.URL.Scheme = "http"
 				req.URL.Host = target.Proxy
 				log.Printf("proxy to %s\n", target.Proxy)
@@ -78,7 +102,10 @@ func NewMultipleHostReverseProxy(config Config) *httputil.ReverseProxy {
 
 		for _, target := range config.Targets {
 			if target.Default {
-				accessLog(req)
+				fmt.Println(req)
+				ctx := req.Context()
+				ctx = context.WithValue(ctx, "time", time.Now())
+				req = req.WithContext(ctx)
 				req.URL.Scheme = "http"
 				req.URL.Host = target.Proxy
 				log.Printf("proxy to %s\n", target.Proxy)
@@ -86,7 +113,14 @@ func NewMultipleHostReverseProxy(config Config) *httputil.ReverseProxy {
 			}
 		}
 	}
-	return &httputil.ReverseProxy{Director: director}
+
+	modifyResponse := func(res *http.Response) error {
+		log.Println("modifyResponse")
+		log.Println(res.Request.RequestURI)
+		accessLog(res)
+		return nil
+	}
+	return &httputil.ReverseProxy{Director: director, ModifyResponse: modifyResponse}
 }
 
 func main() {
