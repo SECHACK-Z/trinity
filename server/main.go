@@ -40,6 +40,7 @@ type LogType struct {
 	Method string `json:"method"`
 	URI    string `json:"uri"`
 }
+type myTransport struct{}
 
 var (
 	Logs []LogType
@@ -48,31 +49,49 @@ var (
 	config Config
 )
 
+func (t *myTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	start := time.Now()
+	response, err := http.DefaultTransport.RoundTrip(req)
+	if err != nil {
+		log.Println("Server is not reachable, err")
+		return nil, err
+	}
+	elapsed := time.Since(start)
+	log.Println("Response Time:", elapsed.Nanoseconds())
 
-func accessLog(req *http.Request) error {
-	//format := "{method:\"%v\", uri:\"%v\"},\n"
+	accessLog(req, response, elapsed)
+
+	return response, nil
+}
+
+func accessLog(req *http.Request, res *http.Response, elapsed time.Duration) {
+	// log.Println("AccessLog", req, res, elapsed)
 	l := LogType{
 		Method: req.Method,
 		URI:    req.RequestURI,
 	}
 	Logs = append(Logs, l)
+	body, err := httputil.DumpResponse(res, true)
+	if err != nil {
+		body = []byte("")
+	}
 
-	format := "time:%v\tmethod:%v\turi:%v\tstatus:200\tsize:10\tapptime:0.100\n"
-	logData := fmt.Sprintf(format, time.Now().Format("2006-01-02T15:04:05+09:00"), req.Method, req.Host+req.RequestURI)
-	fmt.Println(logData)
-	file, err := os.OpenFile(`./logFile`, os.O_APPEND|os.O_WRONLY, 0600)
+	format := "time:%v\tmethod:%v\turi:%v\tstatus:%v\tsize:%v\tapptime:%v\n"
+	logData := fmt.Sprintf(format, time.Now().Format("2006-01-02T15:04:05+09:00"), req.Method, req.Host+req.RequestURI, res.StatusCode, len(body), elapsed.Milliseconds())
+	log.Println(logData)
+	file, err := os.OpenFile(`./logFile`, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer file.Close()
 
 	file.WriteString(logData)
-	return nil
 }
 
 // NewMultipleHostReverseProxy creates a reverse proxy that will randomly
 // select a host from the passed `targets`
 func NewMultipleHostReverseProxy(config Config) *httputil.ReverseProxy {
+
 	director := func(req *http.Request) {
 		for _, target := range config.Targets {
 			if req.Host == target.Host {
@@ -85,7 +104,6 @@ func NewMultipleHostReverseProxy(config Config) *httputil.ReverseProxy {
 
 		for _, target := range config.Targets {
 			if target.Default {
-				accessLog(req)
 				req.URL.Scheme = "http"
 				req.URL.Host = target.Proxy
 				log.Printf("proxy to %s\n", target.Proxy)
@@ -93,6 +111,7 @@ func NewMultipleHostReverseProxy(config Config) *httputil.ReverseProxy {
 			}
 		}
 	}
+
 	return &httputil.ReverseProxy{Director: director}
 }
 
@@ -107,6 +126,8 @@ func main() {
 		log.Fatalf("yaml parse Error: %v", err)
 	}
 
+	proxy := NewMultipleHostReverseProxy(config)
+	proxy.Transport = &myTransport{}
 	go func() {
 		e := echo.New()
 		statikFs, err := fs.New()
