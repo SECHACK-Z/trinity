@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -10,6 +11,7 @@ import (
 	"net/http/httputil"
 	"os"
 	"os/exec"
+	"sync"
 	"time"
 
 	"golang.org/x/crypto/acme/autocert"
@@ -23,15 +25,15 @@ import (
 )
 
 type Target struct {
-	Proxy      string
-	Host       string
-	Https      bool
-	ForceHttps bool
-	Default    bool
+	Proxy      string `json:"proxy"`
+	Host       string `json:"host"`
+	Https      bool   `json:"https"`
+	ForceHttps bool   `json:"forceHttps"`
+	Default    bool   `json:"default"`
 }
 
 type Config struct {
-	Targets []Target
+	Targets []Target `json:"targets"`
 }
 
 type LogType struct {
@@ -40,7 +42,12 @@ type LogType struct {
 }
 type myTransport struct{}
 
-var Logs []LogType
+var (
+	Logs []LogType
+	resetCh chan struct{}
+	httpsHosts []string
+	config Config
+)
 
 func (t *myTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	start := time.Now()
@@ -109,7 +116,6 @@ func NewMultipleHostReverseProxy(config Config) *httputil.ReverseProxy {
 }
 
 func main() {
-	var config Config
 	body, err := ioutil.ReadFile("config.yaml")
 	if err != nil {
 		log.Fatalf("file read Error: %v", err)
@@ -136,6 +142,7 @@ func main() {
 		h := http.FileServer(statikFs)
 
 		e.GET("/*", echo.WrapHandler(http.StripPrefix("/", h)))
+
 		e.GET("/api/log", func(c echo.Context) error {
 			//デモ用の実装
 			data, err := ioutil.ReadFile(`logFile`)
@@ -155,20 +162,108 @@ func main() {
 			}
 			return c.String(200, string(out))
 		})
+
+		e.GET("/api/setting", func(c echo.Context) error {
+			buf, err := yaml.Marshal(config)
+			if err != nil {
+				return c.JSON(http.StatusInternalServerError, err)
+			}
+			return c.JSON(http.StatusOK, struct {
+				Yaml string
+			} {
+				Yaml: string(buf),
+			})
+		})
+
+		e.POST("/api/setting", func(c echo.Context) error {
+			req := &struct {
+				Yaml string `json:"yaml"`
+			}{}
+			c.Bind(req)
+
+			newConfig := Config{}
+			if err := yaml.Unmarshal([]byte(req.Yaml), &newConfig); err != nil {
+				return c.JSON(http.StatusInternalServerError, err)
+			}
+
+			config = newConfig
+			resetCh <- struct{}{}
+
+			return c.NoContent(http.StatusOK)
+		})
+
+		e.POST("/api/setting/save", func(c echo.Context) error {
+			req := &struct {
+				Name string `json:"name"`
+				Yaml string `json:"yaml"`
+			}{}
+			c.Bind(req)
+
+			newConfig := Config{}
+			if err := yaml.Unmarshal([]byte(req.Yaml), &newConfig); err != nil {
+				return c.JSON(http.StatusInternalServerError, err)
+			}
+
+			config = newConfig
+
+			if req.Name == "" {
+				req.Name = "config.yaml"
+			}
+
+			if err := ioutil.WriteFile(req.Name, []byte(req.Yaml), 0755); err != nil {
+				return c.JSON(http.StatusInternalServerError, err)
+			}
+			resetCh <- struct{}{}
+
+			return c.NoContent(http.StatusOK)
+		})
+
 		if err := e.Start(":8080"); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 		}
 	}()
 
-	httpsHosts := make([]string, 0)
-	for _, target := range config.Targets {
-		if target.Https {
-			httpsHosts = append(httpsHosts, target.Host)
-		}
-	}
+	// 設定再読み込みなどなどを行う
+	for {
+		resetCh = make(chan struct{})
+		httpsHosts = make([]string, 0)
 
-	go func() {
-		log.Fatal(http.Serve(autocert.NewListener(httpsHosts...), proxy))
-	}()
-	log.Fatal(http.ListenAndServe(":80", proxy))
+		proxy := NewMultipleHostReverseProxy(config)
+		httpsSrv := &http.Server{Handler: proxy}
+		httpSrv := &http.Server{Addr: ":80", Handler: proxy}
+
+		for _, target := range config.Targets {
+			if target.Https {
+				httpsHosts = append(httpsHosts, target.Host)
+			}
+		}
+
+
+		go func() {
+			httpsSrv.Serve(autocert.NewListener(httpsHosts...))
+		}()
+		go func() {
+			httpSrv.ListenAndServe()
+		}()
+		<-resetCh
+
+		wg := sync.WaitGroup{}
+		wg.Add(2)
+		go func() {
+			ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+			if err := httpsSrv.Shutdown(ctx); err != nil {
+				log.Fatal(err)
+			}
+			wg.Done()
+		}()
+
+		go func() {
+			ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+			if err := httpSrv.Shutdown(ctx); err != nil {
+				log.Fatal(err)
+			}
+			wg.Done()
+		}()
+		wg.Wait()
+	}
 }
