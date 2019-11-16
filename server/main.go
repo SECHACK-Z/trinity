@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -39,48 +38,47 @@ type LogType struct {
 	Method string `json:"method"`
 	URI    string `json:"uri"`
 }
+type myTransport struct{}
 
 var Logs []LogType
 
-type contextKey string
-
-const tokenContextKey contextKey = "requestTime"
-
-func setToken(parents context.Context, t time.Time) context.Context {
-	return context.WithValue(parents, tokenContextKey, t)
-}
-func getToken(ctx context.Context) (time.Time, error) {
-	v := ctx.Value(tokenContextKey)
-	token, ok := v.(time.Time)
-	if !ok {
-		return time.Now(), fmt.Errorf("token not found")
+func (t *myTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	start := time.Now()
+	response, err := http.DefaultTransport.RoundTrip(req)
+	if err != nil {
+		log.Println("Server is not reachable, err")
+		return nil, err
 	}
-	return token, nil
+	elapsed := time.Since(start)
+	log.Println("Response Time:", elapsed.Nanoseconds())
+
+	accessLog(req, response, elapsed)
+
+	return response, nil
 }
 
-func accessLog(res *http.Response) error {
-
-	//format := "{method:\"%v\", uri:\"%v\"},\n"
+func accessLog(req *http.Request, res *http.Response, elapsed time.Duration) {
+	// log.Println("AccessLog", req, res, elapsed)
 	l := LogType{
-		// Method: req.Method,
-		// URI:    req.RequestURI,
-		Method: res.Request.Method,
-		URI:    res.Request.RequestURI,
+		Method: req.Method,
+		URI:    req.RequestURI,
 	}
-	fmt.Println("accessLog")
-	fmt.Println(getToken(res.Request.Context()))
 	Logs = append(Logs, l)
-	format := "time:%v\tmethod:%v\turi:%v\tstatus:200\tsize:10\tapptime:0.100\n"
-	logData := fmt.Sprintf(format, time.Now().Format("2006-01-02T15:04:05+09:00"), res.Request.Method, res.Request.Host+res.Request.RequestURI)
-	fmt.Println(logData)
-	file, err := os.OpenFile(`./logFile`, os.O_APPEND|os.O_WRONLY, 0600)
+	body, err := httputil.DumpResponse(res, true)
+	if err != nil {
+		body = []byte("")
+	}
+
+	format := "time:%v\tmethod:%v\turi:%v\tstatus:%v\tsize:%v\tapptime:%v\n"
+	logData := fmt.Sprintf(format, time.Now().Format("2006-01-02T15:04:05+09:00"), req.Method, req.Host+req.RequestURI, res.StatusCode, len(body), elapsed.Milliseconds())
+	log.Println(logData)
+	file, err := os.OpenFile(`./logFile`, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer file.Close()
 
 	file.WriteString(logData)
-	return nil
 }
 
 // NewMultipleHostReverseProxy creates a reverse proxy that will randomly
@@ -90,13 +88,8 @@ func NewMultipleHostReverseProxy(config Config) *httputil.ReverseProxy {
 	director := func(req *http.Request) {
 		for _, target := range config.Targets {
 			if req.Host == target.Host {
-				fmt.Println("93:", req)
-				ctx := req.Context()
-				ctx = setToken(req.Context(), time.Now())
-				req = req.WithContext(ctx)
 				req.URL.Scheme = "http"
 				req.URL.Host = target.Proxy
-				fmt.Println(req.URL.Scheme)
 				log.Printf("proxy to %s\n", target.Proxy)
 				return
 			}
@@ -104,9 +97,6 @@ func NewMultipleHostReverseProxy(config Config) *httputil.ReverseProxy {
 
 		for _, target := range config.Targets {
 			if target.Default {
-				fmt.Println("105:", req)
-				ctx := setToken(req.Context(), time.Now())
-				req = req.WithContext(ctx)
 				req.URL.Scheme = "http"
 				req.URL.Host = target.Proxy
 				log.Printf("proxy to %s\n", target.Proxy)
@@ -115,13 +105,7 @@ func NewMultipleHostReverseProxy(config Config) *httputil.ReverseProxy {
 		}
 	}
 
-	modifyResponse := func(res *http.Response) error {
-		log.Println("modifyResponse")
-		log.Println(res.Request.RequestURI)
-		accessLog(res)
-		return nil
-	}
-	return &httputil.ReverseProxy{Director: director, ModifyResponse: modifyResponse}
+	return &httputil.ReverseProxy{Director: director}
 }
 
 func main() {
@@ -137,6 +121,7 @@ func main() {
 	}
 
 	proxy := NewMultipleHostReverseProxy(config)
+	proxy.Transport = &myTransport{}
 	go func() {
 		e := echo.New()
 		statikFs, err := fs.New()
