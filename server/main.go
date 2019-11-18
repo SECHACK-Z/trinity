@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -63,6 +64,13 @@ func NewMultipleHostReverseProxy(config Config) *httputil.ReverseProxy {
 }
 
 func main() {
+	systemLogFile, err := os.OpenFile("./systemLog", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		log.Fatalf("cannot open systemlog")
+	}
+	defer systemLogFile.Close()
+	log.SetOutput(io.MultiWriter(systemLogFile, os.Stdout))
+
 	log.Println("Server Start.")
 	body, err := ioutil.ReadFile("config.yaml")
 	if err != nil {
@@ -78,8 +86,10 @@ func main() {
 	proxy.Transport = &myTransport{}
 	log.Printf("%d directors registrated.\n", len(config.Targets))
 
+	// Web UI
 	go func() {
 		e := echo.New()
+		e.HideBanner = true
 		log.Println("webUI started.")
 		statikFs, err := fs.New()
 		if err != nil {
@@ -219,4 +229,5 @@ func main() {
 		}()
 		wg.Wait()
 	}
+
 }
