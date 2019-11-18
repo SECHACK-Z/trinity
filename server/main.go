@@ -24,69 +24,16 @@ import (
 	"github.com/ymotongpoo/goltsv"
 )
 
-type Target struct {
-	Proxy      string `json:"proxy"`
-	Host       string `json:"host"`
-	Https      bool   `json:"https"`
-	ForceHttps bool   `json:"forceHttps"`
-	Default    bool   `json:"default"`
-}
-
 type Config struct {
 	Targets []Target `json:"targets"`
 }
 
-type LogType struct {
-	Method string `json:"method"`
-	URI    string `json:"uri"`
-}
-type myTransport struct{}
-
 var (
-	Logs []LogType
-	resetCh chan struct{}
+	Logs       []LogType
+	resetCh    chan struct{}
 	httpsHosts []string
-	config Config
+	config     Config
 )
-
-func (t *myTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	start := time.Now()
-	response, err := http.DefaultTransport.RoundTrip(req)
-	if err != nil {
-		log.Println("Server is not reachable, err")
-		return nil, err
-	}
-	elapsed := time.Since(start)
-	log.Println("Response Time:", elapsed.Nanoseconds())
-
-	accessLog(req, response, elapsed)
-
-	return response, nil
-}
-
-func accessLog(req *http.Request, res *http.Response, elapsed time.Duration) {
-	// log.Println("AccessLog", req, res, elapsed)
-	l := LogType{
-		Method: req.Method,
-		URI:    req.RequestURI,
-	}
-	Logs = append(Logs, l)
-	body, err := httputil.DumpResponse(res, true)
-	if err != nil {
-		body = []byte("")
-	}
-
-	format := "time:%v\tmethod:%v\turi:%v\tstatus:%v\tsize:%v\tapptime:%v\n"
-	logData := fmt.Sprintf(format, time.Now().Format("2006-01-02T15:04:05+09:00"), req.Method, req.Host+req.RequestURI, res.StatusCode, len(body), elapsed.Milliseconds())
-	log.Println(logData)
-	file, err := os.OpenFile(`./logFile`, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
-
-	file.WriteString(logData)
-}
 
 // NewMultipleHostReverseProxy creates a reverse proxy that will randomly
 // select a host from the passed `targets`
@@ -116,6 +63,7 @@ func NewMultipleHostReverseProxy(config Config) *httputil.ReverseProxy {
 }
 
 func main() {
+	log.Println("Server Start.")
 	body, err := ioutil.ReadFile("config.yaml")
 	if err != nil {
 		log.Fatalf("file read Error: %v", err)
@@ -128,8 +76,11 @@ func main() {
 
 	proxy := NewMultipleHostReverseProxy(config)
 	proxy.Transport = &myTransport{}
+	log.Printf("%d directors registrated.\n", len(config.Targets))
+
 	go func() {
 		e := echo.New()
+		log.Println("webUI started.")
 		statikFs, err := fs.New()
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
@@ -170,7 +121,7 @@ func main() {
 			}
 			return c.JSON(http.StatusOK, struct {
 				Yaml string
-			} {
+			}{
 				Yaml: string(buf),
 			})
 		})
@@ -213,6 +164,7 @@ func main() {
 			if err := ioutil.WriteFile(req.Name, []byte(req.Yaml), 0755); err != nil {
 				return c.JSON(http.StatusInternalServerError, err)
 			}
+			log.Println("New Configuration file saved.")
 			resetCh <- struct{}{}
 
 			return c.NoContent(http.StatusOK)
@@ -229,6 +181,8 @@ func main() {
 		httpsHosts = make([]string, 0)
 
 		proxy := NewMultipleHostReverseProxy(config)
+		proxy.Transport = &myTransport{}
+
 		httpsSrv := &http.Server{Handler: proxy}
 		httpSrv := &http.Server{Addr: ":80", Handler: proxy}
 
@@ -237,8 +191,7 @@ func main() {
 				httpsHosts = append(httpsHosts, target.Host)
 			}
 		}
-
-
+		log.Println("New settings applied.")
 		go func() {
 			httpsSrv.Serve(autocert.NewListener(httpsHosts...))
 		}()
