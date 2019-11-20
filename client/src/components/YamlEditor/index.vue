@@ -48,13 +48,13 @@ export default {
       this.$emit('input', cm.getValue())
     })
   },
+  created() {
+    window.jsyaml = yaml
+  },
   methods: {
     getValue() {
       return this.yamlEditor.getValue()
     }
-  },
-  created() {
-    window.jsyaml = yaml
   }
 }
 </script>

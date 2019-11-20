@@ -1,7 +1,7 @@
 <template>
   <div class="app-container">
     <div class="editor-container">
-      <yaml-editor ref="yamlEditor" v-model="configText"></yaml-editor>
+      <yaml-editor ref="yamlEditor" v-model="configText" />
     </div>
     <el-row>
       <el-button type="primary" @click="setConfig">反映</el-button>
@@ -11,7 +11,7 @@
 </template>
 
 <script>
-import {getConfig, setConfig, saveConfig} from '@/api/config'
+import { getConfig, setConfig, saveConfig } from '@/api/config'
 import YamlEditor from '@/components/YamlEditor'
 
 export default {
@@ -24,9 +24,14 @@ export default {
       configText: ''
     }
   },
+  async mounted() {
+    const res = await getConfig()
+    console.log(res)
+    this.configText = res.Yaml
+  },
   methods: {
     async setConfig() {
-      await setConfig({Yaml: this.configText})
+      await setConfig({ Yaml: this.configText })
       const res = await getConfig()
       this.configText = res.Yaml
       this.$notify({
@@ -36,7 +41,7 @@ export default {
       })
     },
     async saveConfig() {
-      await saveConfig({Yaml: this.configText})
+      await saveConfig({ Yaml: this.configText })
       const res = await getConfig()
       this.configText = res.Yaml
       this.$notify({
@@ -45,11 +50,6 @@ export default {
         type: 'success'
       })
     }
-  },
-  async mounted() {
-    const res = await getConfig()
-    console.log(res)
-    this.configText = res.Yaml
   }
 }
 </script>
