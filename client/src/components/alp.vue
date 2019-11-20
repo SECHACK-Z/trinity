@@ -13,7 +13,7 @@ export default Vue.component("Alp", {
   },
   mounted() {
     axios.get("/api/alp").then(response => {
-      console.log(response.data);
+      // console.log(response.data);
       this.result = response.data;
     });
   }

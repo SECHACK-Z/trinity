@@ -69,7 +69,7 @@ export default Vue.component("Log", {
       return Math.floor(Math.random() * Math.floor(max));
     };
     axios.get("/api/log").then(response => {
-      console.log(response.data);
+      // console.log(response.data);
       const data = JSON.parse(response.data);
       const results: Array<resultType> = [];
       data.forEach((d: any) => {
@@ -84,7 +84,7 @@ export default Vue.component("Log", {
         }
       });
 
-      console.log(results);
+      // console.log(results);
 
       const edges: edgeType[] = [];
       const nodes: nodeType[] = [
