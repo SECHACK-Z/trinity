@@ -84,6 +84,18 @@ export const constantRoutes = [
     ]
   },
   {
+    path: '/config',
+    component: Layout,
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/views/config-editor/index'),
+        name: 'Config Editor',
+        meta: { title: 'Config Editor', icon: 'form', nocache: true }
+      }
+    ]
+  },
+  {
     path: '/documentation',
     component: Layout,
     children: [
