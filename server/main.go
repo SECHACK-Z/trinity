@@ -124,7 +124,7 @@ func main() {
 			return c.String(200, string(out))
 		})
 
-		e.GET("/api/setting", func(c echo.Context) error {
+		e.GET("/api/config", func(c echo.Context) error {
 			buf, err := yaml.Marshal(config)
 			if err != nil {
 				return c.JSON(http.StatusInternalServerError, err)
@@ -136,7 +136,7 @@ func main() {
 			})
 		})
 
-		e.POST("/api/setting", func(c echo.Context) error {
+		e.POST("/api/config", func(c echo.Context) error {
 			req := &struct {
 				Yaml string `json:"yaml"`
 			}{}
@@ -153,7 +153,7 @@ func main() {
 			return c.NoContent(http.StatusOK)
 		})
 
-		e.POST("/api/setting/save", func(c echo.Context) error {
+		e.POST("/api/config/save", func(c echo.Context) error {
 			req := &struct {
 				Name string `json:"name"`
 				Yaml string `json:"yaml"`
