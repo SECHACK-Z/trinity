@@ -11,7 +11,7 @@ type systemLogger struct {
 	logFile *os.File
 }
 
-func (logger *systemLogger) fileLogger(event pubsub.SystemEvent) {
+func (logger *systemLogger) fileLogger(event pubsub.System) {
 	log.Println(event.Type)
 }
 
@@ -25,6 +25,5 @@ func StartSystemLogger() {
 	}
 	log.SetOutput(io.MultiWriter(logger.logFile, os.Stdout))
 
-	ps := pubsub.GetSystemEventPubSub()
-	ps.Sub(logger.fileLogger)
+	pubsub.SystemEvent.Sub(logger.fileLogger)
 }

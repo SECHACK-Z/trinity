@@ -5,24 +5,17 @@
 package pubsub
 
 // TODO: Close処理
-type AccessEventPubSub struct {
-	subs map[string]func(AccessEvent)
-	c    chan AccessEvent
+type __AccessPubSub struct {
+	subs map[string]func(Access)
+	c    chan Access
 }
 
-var _AccessEventPubSub *AccessEventPubSub
-
-func GetAccessEventPubSub() *AccessEventPubSub {
-	if _AccessEventPubSub == nil {
-		_AccessEventPubSub = &AccessEventPubSub{
-			subs: make(map[string]func(AccessEvent)),
-			c:    make(chan AccessEvent, 10),
-		}
-	}
-	return _AccessEventPubSub
+var AccessEvent = &__AccessPubSub{
+	subs: make(map[string]func(Access)),
+	c:    make(chan Access, 10),
 }
 
-func (ps *AccessEventPubSub) Sub(f func(et AccessEvent)) string {
+func (ps *__AccessPubSub) Sub(f func(et Access)) string {
 	subID := randomStr(5)
 	for _, ok := ps.subs[subID]; ok; _, ok = ps.subs[subID] {
 		subID = randomStr(5)
@@ -31,31 +24,24 @@ func (ps *AccessEventPubSub) Sub(f func(et AccessEvent)) string {
 	return subID
 }
 
-func (ps *AccessEventPubSub) Pub(event AccessEvent) {
+func (ps *__AccessPubSub) Pub(event Access) {
 	for _, f := range ps.subs {
 		go f(event)
 	}
 }
 
 // TODO: Close処理
-type SystemEventPubSub struct {
-	subs map[string]func(SystemEvent)
-	c    chan SystemEvent
+type __SystemPubSub struct {
+	subs map[string]func(System)
+	c    chan System
 }
 
-var _SystemEventPubSub *SystemEventPubSub
-
-func GetSystemEventPubSub() *SystemEventPubSub {
-	if _SystemEventPubSub == nil {
-		_SystemEventPubSub = &SystemEventPubSub{
-			subs: make(map[string]func(SystemEvent)),
-			c:    make(chan SystemEvent, 10),
-		}
-	}
-	return _SystemEventPubSub
+var SystemEvent = &__SystemPubSub{
+	subs: make(map[string]func(System)),
+	c:    make(chan System, 10),
 }
 
-func (ps *SystemEventPubSub) Sub(f func(et SystemEvent)) string {
+func (ps *__SystemPubSub) Sub(f func(et System)) string {
 	subID := randomStr(5)
 	for _, ok := ps.subs[subID]; ok; _, ok = ps.subs[subID] {
 		subID = randomStr(5)
@@ -64,7 +50,33 @@ func (ps *SystemEventPubSub) Sub(f func(et SystemEvent)) string {
 	return subID
 }
 
-func (ps *SystemEventPubSub) Pub(event SystemEvent) {
+func (ps *__SystemPubSub) Pub(event System) {
+	for _, f := range ps.subs {
+		go f(event)
+	}
+}
+
+// TODO: Close処理
+type __UpdateConfigPubSub struct {
+	subs map[string]func(UpdateConfig)
+	c    chan UpdateConfig
+}
+
+var UpdateConfigEvent = &__UpdateConfigPubSub{
+	subs: make(map[string]func(UpdateConfig)),
+	c:    make(chan UpdateConfig, 10),
+}
+
+func (ps *__UpdateConfigPubSub) Sub(f func(et UpdateConfig)) string {
+	subID := randomStr(5)
+	for _, ok := ps.subs[subID]; ok; _, ok = ps.subs[subID] {
+		subID = randomStr(5)
+	}
+	ps.subs[subID] = f
+	return subID
+}
+
+func (ps *__UpdateConfigPubSub) Pub(event UpdateConfig) {
 	for _, f := range ps.subs {
 		go f(event)
 	}

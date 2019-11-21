@@ -8,12 +8,10 @@ import (
 )
 
 type myTransport struct{
-	ps *pubsub.AccessEventPubSub
 }
 
 func New() *myTransport {
 	return &myTransport{
-		ps: pubsub.GetAccessEventPubSub(),
 	}
 }
 
@@ -27,6 +25,6 @@ func (t *myTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	elapsed := time.Since(start)
 	log.Println("Response Time:", elapsed.Nanoseconds())
 
-	t.ps.Pub(pubsub.AccessEvent{req, response, elapsed})
+	pubsub.AccessEvent.Pub(pubsub.Access{req, response, elapsed})
 	return response, nil
 }

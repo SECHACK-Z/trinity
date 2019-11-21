@@ -9,20 +9,12 @@ import (
 	"time"
 )
 
-type Target struct {
-	Proxy      string `json:"proxy"`
-	Host       string `json:"host"`
-	Https      bool   `json:"https"`
-	ForceHttps bool   `json:"forceHttps"`
-	Default    bool   `json:"default"`
-}
-
 type LogType struct {
 	Method string `json:"method"`
 	URI    string `json:"uri"`
 }
 
-func fileLogger(event pubsub.AccessEvent) {
+func fileLogger(event pubsub.Access) {
 	req := event.Req
 	res := event.Res
 	elapsed := event.Elapsed
@@ -43,7 +35,6 @@ func fileLogger(event pubsub.AccessEvent) {
 }
 
 func StartAccessLogger() {
-	ps := pubsub.GetAccessEventPubSub()
-	ps.Sub(fileLogger)
+	pubsub.AccessEvent.Sub(fileLogger)
 	// log.Println("AccessLog", req, res, elapsed)
 }
