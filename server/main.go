@@ -5,9 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
+	"main/logger"
+	"main/pubsub"
+	"main/pubsub/systemevent"
+	"main/transport"
 	"net/http"
 	"net/http/httputil"
 	"os"
@@ -26,20 +29,20 @@ import (
 )
 
 type Config struct {
-	Targets []Target `json:"targets"`
+	Targets []logger.Target `json:"targets"`
 }
 
 var (
-	Logs       []LogType
+	Logs       []logger.LogType
 	resetCh    chan struct{}
 	httpsHosts []string
 	config     Config
+	systemEventPubSub *pubsub.SystemEventPubSub
 )
 
 // NewMultipleHostReverseProxy creates a reverse proxy that will randomly
 // select a host from the passed `targets`
 func NewMultipleHostReverseProxy(config Config) *httputil.ReverseProxy {
-
 	director := func(req *http.Request) {
 		for _, target := range config.Targets {
 			if req.Host == target.Host {
@@ -64,33 +67,25 @@ func NewMultipleHostReverseProxy(config Config) *httputil.ReverseProxy {
 }
 
 func main() {
-	systemLogFile, err := os.OpenFile("./systemLog", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
-	if err != nil {
-		log.Fatalf("cannot open systemlog")
-	}
-	defer systemLogFile.Close()
-	log.SetOutput(io.MultiWriter(systemLogFile, os.Stdout))
+	systemEventPubSub = pubsub.GetSystemEventPubSub()
+	systemEventPubSub.Pub(pubsub.SystemEvent{Time: time.Now(), Type: systemevent.SERVER_START})
 
-	log.Println("Server Start.")
 	body, err := ioutil.ReadFile("config.yaml")
 	if err != nil {
-		log.Fatalf("file read Error: %v", err)
+		systemEventPubSub.Pub(pubsub.SystemEvent{Time:time.Now(), Type:systemevent.ERROR, Message:fmt.Sprintf("file read error: %s", err)})
 	}
 
 	err = yaml.Unmarshal(body, &config)
 	if err != nil {
-		log.Fatalf("yaml parse Error: %v", err)
+		systemEventPubSub.Pub(pubsub.SystemEvent{Time:time.Now(), Type:systemevent.ERROR, Message:fmt.Sprintf("yaml parse error: %s", err)})
 	}
 
-	proxy := NewMultipleHostReverseProxy(config)
-	proxy.Transport = &myTransport{}
-	log.Printf("%d directors registrated.\n", len(config.Targets))
 
 	// Web UI
 	go func() {
 		e := echo.New()
 		e.HideBanner = true
-		log.Println("webUI started.")
+		systemEventPubSub.Pub(pubsub.SystemEvent{Time:time.Now(), Type: systemevent.WEBUI_START})
 		statikFs, err := fs.New()
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
@@ -108,7 +103,7 @@ func main() {
 			//デモ用の実装
 			data, err := ioutil.ReadFile(`logFile`)
 			if err != nil {
-				log.Println(err)
+				systemEventPubSub.Pub(pubsub.SystemEvent{Time:time.Now(), Type:systemevent.ERROR, Message:err.Error()})
 			}
 			b := bytes.NewBufferString(string(data))
 			reader := goltsv.NewReader(b)
@@ -119,7 +114,7 @@ func main() {
 		e.GET("/api/alp", func(c echo.Context) error {
 			out, err := exec.Command("sh", "-c", "cat logFile | alp --sort=max ltsv").Output()
 			if err != nil {
-				log.Fatal(err.Error())
+				systemEventPubSub.Pub(pubsub.SystemEvent{Time:time.Now(), Type:systemevent.ERROR, Message:err.Error()})
 			}
 			return c.String(200, string(out))
 		})
@@ -174,7 +169,7 @@ func main() {
 			if err := ioutil.WriteFile(req.Name, []byte(req.Yaml), 0755); err != nil {
 				return c.JSON(http.StatusInternalServerError, err)
 			}
-			log.Println("New Configuration file saved.")
+			systemEventPubSub.Pub(pubsub.SystemEvent{Time:time.Now(), Type:systemevent.NEW_CONFIG_SAVE})
 			resetCh <- struct{}{}
 
 			return c.NoContent(http.StatusOK)
@@ -191,7 +186,8 @@ func main() {
 		httpsHosts = make([]string, 0)
 
 		proxy := NewMultipleHostReverseProxy(config)
-		proxy.Transport = &myTransport{}
+		proxy.Transport = transport.New()
+		systemEventPubSub.Pub(pubsub.SystemEvent{Time:time.Now(), Type:systemevent.DIRECTORS_REGISTER})
 
 		httpsSrv := &http.Server{Handler: proxy}
 		httpSrv := &http.Server{Addr: ":80", Handler: proxy}
@@ -201,7 +197,7 @@ func main() {
 				httpsHosts = append(httpsHosts, target.Host)
 			}
 		}
-		log.Println("New settings applied.")
+		systemEventPubSub.Pub(pubsub.SystemEvent{Time:time.Now(), Type: systemevent.NEW_SETTINGS_APPLY})
 		go func() {
 			httpsSrv.Serve(autocert.NewListener(httpsHosts...))
 		}()

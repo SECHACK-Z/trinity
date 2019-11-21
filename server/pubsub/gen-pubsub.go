@@ -4,16 +4,17 @@
 
 package pubsub
 
-type __AccessEventPubSub struct {
+// TODO: Close処理
+type AccessEventPubSub struct {
 	subs map[string]func(AccessEvent)
 	c    chan AccessEvent
 }
 
-var _AccessEventPubSub *__AccessEventPubSub
+var _AccessEventPubSub *AccessEventPubSub
 
-func GetAccessEventPubSub() *__AccessEventPubSub {
+func GetAccessEventPubSub() *AccessEventPubSub {
 	if _AccessEventPubSub == nil {
-		_AccessEventPubSub = &__AccessEventPubSub{
+		_AccessEventPubSub = &AccessEventPubSub{
 			subs: make(map[string]func(AccessEvent)),
 			c:    make(chan AccessEvent, 10),
 		}
@@ -21,7 +22,7 @@ func GetAccessEventPubSub() *__AccessEventPubSub {
 	return _AccessEventPubSub
 }
 
-func (ps *__AccessEventPubSub) Sub(f func(et AccessEvent)) string {
+func (ps *AccessEventPubSub) Sub(f func(et AccessEvent)) string {
 	subID := randomStr(5)
 	for _, ok := ps.subs[subID]; ok; _, ok = ps.subs[subID] {
 		subID = randomStr(5)
@@ -30,30 +31,31 @@ func (ps *__AccessEventPubSub) Sub(f func(et AccessEvent)) string {
 	return subID
 }
 
-func (ps *__AccessEventPubSub) Pub(event AccessEvent) {
+func (ps *AccessEventPubSub) Pub(event AccessEvent) {
 	for _, f := range ps.subs {
 		go f(event)
 	}
 }
 
-type __AccessEvent2PubSub struct {
-	subs map[string]func(AccessEvent2)
-	c    chan AccessEvent2
+// TODO: Close処理
+type SystemEventPubSub struct {
+	subs map[string]func(SystemEvent)
+	c    chan SystemEvent
 }
 
-var _AccessEvent2PubSub *__AccessEvent2PubSub
+var _SystemEventPubSub *SystemEventPubSub
 
-func GetAccessEvent2PubSub() *__AccessEvent2PubSub {
-	if _AccessEvent2PubSub == nil {
-		_AccessEvent2PubSub = &__AccessEvent2PubSub{
-			subs: make(map[string]func(AccessEvent2)),
-			c:    make(chan AccessEvent2, 10),
+func GetSystemEventPubSub() *SystemEventPubSub {
+	if _SystemEventPubSub == nil {
+		_SystemEventPubSub = &SystemEventPubSub{
+			subs: make(map[string]func(SystemEvent)),
+			c:    make(chan SystemEvent, 10),
 		}
 	}
-	return _AccessEvent2PubSub
+	return _SystemEventPubSub
 }
 
-func (ps *__AccessEvent2PubSub) Sub(f func(et AccessEvent2)) string {
+func (ps *SystemEventPubSub) Sub(f func(et SystemEvent)) string {
 	subID := randomStr(5)
 	for _, ok := ps.subs[subID]; ok; _, ok = ps.subs[subID] {
 		subID = randomStr(5)
@@ -62,7 +64,7 @@ func (ps *__AccessEvent2PubSub) Sub(f func(et AccessEvent2)) string {
 	return subID
 }
 
-func (ps *__AccessEvent2PubSub) Pub(event AccessEvent2) {
+func (ps *SystemEventPubSub) Pub(event SystemEvent) {
 	for _, f := range ps.subs {
 		go f(event)
 	}
