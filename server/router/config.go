@@ -8,7 +8,7 @@ import (
 )
 
 func(r *router) getConfig (c echo.Context) error {
-	config := r.configManager.Get()
+	config := r.manager.Config.Get()
 	buf, err := yaml.Marshal(config)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err)
@@ -30,7 +30,7 @@ func(r *router) postConfig (c echo.Context) error {
 	if err := yaml.Unmarshal([]byte(req.Yaml), &newConfig); err != nil {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
-	if err := r.configManager.SetConfig(newConfig); err != nil {
+	if err := r.manager.Config.SetConfig(newConfig); err != nil {
 		return c.JSON(http.StatusBadRequest, err)
 	}
 
@@ -48,11 +48,11 @@ func(r *router) postSaveConfig (c echo.Context) error {
 	if err := yaml.Unmarshal([]byte(req.Yaml), &newConfig); err != nil {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
-	if err := r.configManager.SetConfig(newConfig); err != nil {
+	if err := r.manager.Config.SetConfig(newConfig); err != nil {
 		return c.JSON(http.StatusBadRequest, err)
 	}
 
-	if err := r.configManager.Save(); err != nil {
+	if err := r.manager.Config.Save(); err != nil {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 

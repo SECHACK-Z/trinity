@@ -1,6 +1,7 @@
-package manager
+package config
 
 import (
+	"github.com/jinzhu/gorm"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"main/config"
@@ -10,14 +11,16 @@ import (
 )
 
 type ConfigManager struct{
+	db *gorm.DB
 	config config.Config
 }
 
-func New() *ConfigManager{
+func New(db *gorm.DB) *ConfigManager {
+	db.AutoMigrate()
 	return &ConfigManager{
+		db: db,
 	}
 }
-
 
 func (cm *ConfigManager) SetConfig(conf config.Config) error {
 	// TODO: Validate
@@ -27,7 +30,7 @@ func (cm *ConfigManager) SetConfig(conf config.Config) error {
 }
 
 func (cm *ConfigManager) SetUpFromFile() error {
-	body, err := ioutil.ReadFile("conf.yaml")
+	body, err := ioutil.ReadFile("config.yaml")
 	if err != nil {
 		return err
 	}

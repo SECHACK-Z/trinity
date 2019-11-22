@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"github.com/jinzhu/gorm"
 	"log"
-	"main/config/manager"
-	"main/logger"
-	"main/model"
-	"main/pubsub"
 	"main/config"
+	"main/logger"
+	"main/manager"
+	"main/pubsub"
 	"main/pubsub/systemevent"
 	"main/router"
 	"main/transport"
@@ -22,6 +21,7 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 
 	_ "main/statik"
+	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/labstack/echo/v4"
 )
@@ -78,13 +78,14 @@ func main() {
 		panic(err)
 	}
 
-	repo := model.NewGormRepository(engine)
-
 	pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.SERVER_START})
 
-	configManager := manager.New()
+	manager := manager.New(engine)
+	if err := manager.Config.SetUpFromFile(); err != nil {
+		panic(err)
+	}
 
-	r := router.New(repo, configManager)
+	r := router.New(manager)
 	// Web UI
 	go func() {
 		e := echo.New()
@@ -148,4 +149,6 @@ func main() {
 
 		}
 	})
+
+	time.Sleep(10000000*time.Second)
 }
