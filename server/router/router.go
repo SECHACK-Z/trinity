@@ -29,14 +29,16 @@ func New(repo model.Repository, configManager *manager.ConfigManager) *router {
 }
 
 func (r *router) SetUp(e *echo.Echo) error {
-	e.GET("/api/ping", r.ping)
 	e.GET("/*", r.getStaticHandler())
 
-	e.GET("/api/log", r.getLog)
-	e.GET("/api/alp", r.getALP)
-	e.GET("/api/config", r.getConfig)
-	e.POST("/api/config", r.postConfig)
-	e.POST("/api/config/save", r.postSaveConfig)
+	api := e.Group("/api")
+
+	api.GET("/ping", r.ping)
+	api.GET("/log", r.getLog)
+	api.GET("/alp", r.getALP)
+	api.GET("/config", r.getConfig)
+	api.POST("/config", r.postConfig)
+	api.POST("/config/save", r.postSaveConfig)
 	return nil
 }
 
