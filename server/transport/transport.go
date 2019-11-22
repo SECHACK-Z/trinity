@@ -1,10 +1,19 @@
-package main
+package transport
 
 import (
 	"log"
+	"main/pubsub"
 	"net/http"
 	"time"
 )
+
+type myTransport struct{
+}
+
+func New() *myTransport {
+	return &myTransport{
+	}
+}
 
 func (t *myTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	start := time.Now()
@@ -16,7 +25,6 @@ func (t *myTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	elapsed := time.Since(start)
 	log.Println("Response Time:", elapsed.Nanoseconds())
 
-	accessLog(req, response, elapsed)
-
+	pubsub.AccessEvent.Pub(pubsub.Access{req, response, elapsed})
 	return response, nil
 }
