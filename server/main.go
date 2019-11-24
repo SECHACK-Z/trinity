@@ -80,24 +80,6 @@ func main() {
 
 	pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.SERVER_START})
 
-	manager := manager.New(engine)
-	if err := manager.Config.SetUpFromFile(); err != nil {
-		panic(err)
-	}
-
-	r := router.New(manager)
-	// Web UI
-	go func() {
-		e := echo.New()
-		e.HideBanner = true
-		pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.WEBUI_START})
-
-		r.SetUp(e)
-
-		if err := e.Start(":8080"); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-		}
-	}()
 
 	// 設定再読み込みなどなどを行う
 	var resetF func() = func() {}
@@ -150,5 +132,20 @@ func main() {
 		}
 	})
 
-	time.Sleep(10000000*time.Second)
+	manager := manager.New(engine)
+	if err := manager.Config.SetUpFromFile(); err != nil {
+		panic(err)
+	}
+
+	r := router.New(manager)
+	// Web UI
+	e := echo.New()
+	e.HideBanner = true
+	pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.WEBUI_START})
+
+	r.SetUp(e)
+
+	if err := e.Start(":8080"); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	}
 }
