@@ -28,12 +28,6 @@ import (
 
 var (
 	Logs       []logger.LogType
-	resetCh    chan struct{}
-	httpsHosts []string
-	conf       config.Config
-
-	httpSrv  *http.Server
-	httpsSrv *http.Server
 )
 
 // NewMultipleHostReverseProxy creates a reverse proxy that will randomly
@@ -81,19 +75,22 @@ func main() {
 	pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.SERVER_START})
 
 
+	manager := manager.New(engine)
+
 	// 設定再読み込みなどなどを行う
 	var resetF func() = func() {}
 	pubsub.UpdateConfigEvent.Sub(func(event pubsub.UpdateConfig) {
 		// ちゃんとロックを取らないとヤバそう
 		resetF()
+		conf := manager.Config.Get()
 
-		httpsHosts = make([]string, 0)
+		httpsHosts := make([]string, 0)
 		proxy := NewMultipleHostReverseProxy(conf)
 		proxy.Transport = transport.New()
 		pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.DIRECTORS_REGISTER})
 
-		httpsSrv = &http.Server{Handler: proxy}
-		httpSrv = &http.Server{Addr: ":80", Handler: proxy}
+		httpsSrv := &http.Server{Handler: proxy}
+		httpSrv := &http.Server{Addr: ":80", Handler: proxy}
 
 		for _, target := range conf.Targets {
 			if target.Https {
@@ -132,7 +129,6 @@ func main() {
 		}
 	})
 
-	manager := manager.New(engine)
 	if err := manager.Config.SetUpFromFile(); err != nil {
 		panic(err)
 	}
