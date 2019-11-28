@@ -50,6 +50,7 @@ func (cm *ConfigManager) Get() config.Config {
 }
 
 func (cm *ConfigManager) Save() error {
+	// TODO: デフォルトの値が書き込まれてしまう(falseとか)
 	buf, err := yaml.Marshal(cm.config)
 	if err != nil {
 		return err

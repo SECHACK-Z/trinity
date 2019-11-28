@@ -16,6 +16,29 @@
         <el-button @click="addHeader">New Header</el-button>
       </el-form-item>
       <el-form-item>
+        <el-tag
+          v-for="e in webhook.event"
+          :key="e.event"
+          closable
+          @close="delSubEvent(e)"
+        >
+          {{ e.event }}
+        </el-tag>
+        <el-select
+          size="mini"
+          value=""
+          placeholder="購読するイベント"
+          @change="addSubEvent"
+        >
+          <el-option
+            v-for="option in options"
+            :key="option"
+            :value="option"
+            :label="option"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item>
         <template v-if="webhookID === 'new'">
           <el-button @click="createWebhook">Create</el-button>
         </template>
@@ -36,7 +59,15 @@ export default {
   data() {
     return {
       webhookID: '',
-      webhook: {}
+      webhook: {},
+      allOptions: ['poi', 'po']
+    }
+  },
+  computed: {
+    options() {
+      return this.allOptions.filter(opt => {
+        return !this.webhook.event.find(e => e.event === opt)
+      })
     }
   },
   async mounted() {
@@ -77,6 +108,13 @@ export default {
     async deleteWebhook() {
       await deleteWebhook(this.webhook)
       this.$router.push('/webhook')
+    },
+    addSubEvent(event) {
+      this.webhook.event.push({ event })
+    },
+    delSubEvent(event) {
+      console.log(event)
+      this.webhook.event = this.webhook.event.filter(e => e.event !== event.event)
     }
   }
 }

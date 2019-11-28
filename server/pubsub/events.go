@@ -22,3 +22,9 @@ type System struct {
 type UpdateConfig struct {
 	Config config.Config
 }
+
+type HealthCheck struct {
+	Target string
+	Status int
+	Message string
+}
