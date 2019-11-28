@@ -383,7 +383,18 @@ export const asyncRoutes = [
       }
     ]
   },
-
+  {
+    path: '/alp',
+    component: Layout,
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/views/alp-log/index'),
+        name: 'alp',
+        meta: { title: 'log', icon: 'clipboard' }
+      }
+    ]
+  },
   {
     path: 'external-link',
     component: Layout,
@@ -394,7 +405,6 @@ export const asyncRoutes = [
       }
     ]
   },
-
   // 404 page must be placed at the end !!!
   { path: '*', redirect: '/404', hidden: true }
 ]
