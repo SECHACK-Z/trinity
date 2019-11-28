@@ -11,5 +11,3 @@ type Target struct {
 	ForceHttps bool   `json:"forceHttps"`
 	Default    bool   `json:"default"`
 }
-
-

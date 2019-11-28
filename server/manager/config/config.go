@@ -10,8 +10,8 @@ import (
 	"time"
 )
 
-type ConfigManager struct{
-	db *gorm.DB
+type ConfigManager struct {
+	db     *gorm.DB
 	config config.Config
 }
 

@@ -70,3 +70,6 @@ fabric.properties
 main
 server/app
 proxy.db
+accessLog
+server/tmp/runner-build
+server/gin-bin

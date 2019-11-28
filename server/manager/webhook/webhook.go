@@ -10,7 +10,6 @@ import (
 	"time"
 )
 
-
 type WebhookManager struct {
 	db *gorm.DB
 }

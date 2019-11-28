@@ -5,12 +5,14 @@
 @import './sidebar.scss';
 @import './btn.scss';
 
+@import url('https://fonts.googleapis.com/css?family=Noto+Sans+JP&display=swap');
+
 body {
   height: 100%;
   -moz-osx-font-smoothing: grayscale;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  font-family: Helvetica Neue, Helvetica, PingFang SC, Hiragino Sans GB, Microsoft YaHei, Arial, sans-serif;
+  font-family: 'Noto Sans JP', sans-serif;
 }
 
 label {

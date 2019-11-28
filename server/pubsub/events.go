@@ -8,14 +8,14 @@ import (
 )
 
 type Access struct {
-	Req *http.Request
-	Res *http.Response
+	Req     *http.Request
+	Res     *http.Response
 	Elapsed time.Duration
 }
 
 type System struct {
-	Time time.Time
-	Type systemevent.SystemEventType
+	Time    time.Time
+	Type    systemevent.SystemEventType
 	Message string
 }
 

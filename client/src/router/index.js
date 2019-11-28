@@ -96,6 +96,32 @@ export const constantRoutes = [
     ]
   },
   {
+    path: '/webhooks',
+    component: Layout,
+    children: [
+      {
+        path: '/webhook',
+        component: () => import('@/views/webhook/index'),
+        name: 'Webhook',
+        meta: { title: 'Webhook', icon: 'form', nocache: true }
+      },
+      {
+        path: '/webhook/new',
+        component: () => import('@/views/webhook/_id'),
+        name: 'New Webhook',
+        meta: { title: 'New Webhook', icon: 'form', nocache: true },
+        hidden: true
+      },
+      {
+        path: '/webhook/:id',
+        component: () => import('@/views/webhook/_id'),
+        name: 'Webhook Detail',
+        meta: { title: 'Webhook Detail', icon: 'form', nocache: true },
+        hidden: true
+      }
+    ]
+  },
+  {
     path: '/documentation',
     component: Layout,
     children: [
