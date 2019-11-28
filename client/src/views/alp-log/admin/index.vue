@@ -1,125 +1,48 @@
 <template>
   <div class="dashboard-editor-container">
-    <!-- <github-corner class="github-corner" /> -->
-
-    <!-- <panel-group @handleSetLineChartData="handleSetLineChartData" /> -->
-
     <el-row style="background:#fff;padding:16px 16px 0;margin-bottom:32px;">
-      <line-chart v-if="islineChartData" :chart-data="lineChartData" />
+      <line-chart v-if="isFetched" :chart-data="lineChartData" />
     </el-row>
 
     <el-row :gutter="32">
-      <!-- <el-col :xs="24" :sm="24" :lg="8">
-        <div class="chart-wrapper">
-          <raddar-chart />
-        </div>
-      </el-col> -->
       <el-col :xs="24" :sm="24" :lg="8">
-        <div v-if="isPieChartData" class="chart-wrapper">
+        <div v-if="isFetched" class="chart-wrapper">
           <pie-chart :chart-data="pieChartData" />
         </div>
       </el-col>
       <el-col :xs="24" :sm="24" :lg="8">
-        <div class="chart-wrapper">
-          <bar-chart />
+        <div v-if="isFetched" class="chart-wrapper">
+          <bar-chart :chart-data="barChartData" />
         </div>
       </el-col>
     </el-row>
-
-    <!-- <el-row :gutter="8">
-      <el-col :xs="{span: 24}" :sm="{span: 24}" :md="{span: 24}" :lg="{span: 12}" :xl="{span: 12}" style="padding-right:8px;margin-bottom:30px;">
-        <transaction-table />
-      </el-col>
-      <el-col :xs="{span: 24}" :sm="{span: 12}" :md="{span: 12}" :lg="{span: 6}" :xl="{span: 6}" style="margin-bottom:30px;">
-        <todo-list />
-      </el-col>
-      <el-col :xs="{span: 24}" :sm="{span: 12}" :md="{span: 12}" :lg="{span: 6}" :xl="{span: 6}" style="margin-bottom:30px;">
-        <box-card />
-      </el-col>
-    </el-row> -->
   </div>
 </template>
 
 <script>
-// import GithubCorner from '@/components/GithubCorner'
-// import PanelGroup from './components/PanelGroup'
 import LineChart from './components/LineChart'
-// import RaddarChart from './components/RaddarChart'
 import PieChart from './components/PieChart'
 import BarChart from './components/BarChart'
-// import TransactionTable from './components/TransactionTable'
-// import TodoList from './components/TodoList'
-// import BoxCard from './components/BoxCard'
-
 import axios from 'axios'
-
-// const hosts = ['a.sechack-z.org', 'b.sechack-z.org']
-const lineChartData = {
-  newVisitis: {
-    expectedData: [100, 120, 161, 134, 105, 160, 165],
-    actualData: [120, 82, 91, 154, 162, 140, 145]
-  },
-  messages: {
-    expectedData: [200, 192, 120, 144, 160, 130, 140],
-    actualData: [180, 160, 151, 106, 145, 150, 130]
-  },
-  purchases: {
-    expectedData: [80, 100, 121, 104, 105, 90, 100],
-    actualData: [120, 90, 100, 138, 142, 130, 130]
-  },
-  shoppings: {
-    expectedData: [130, 140, 141, 142, 145, 150, 160],
-    actualData: [120, 82, 91, 154, 162, 140, 130]
-  }
-}
-
-// const pieChartData = {
-//   hosts: ['a.sechack-z.org', 'b.sechack-z.org'],
-//   pieChartData: [
-//     { value: 320, name: 'a.sechack-z.org' },
-//     { value: 240, name: 'b.sechack-z.org' }
-//   ]
-// }
-
-// const barChartData = {}
 
 export default {
   name: 'DashboardAdmin',
   components: {
-    // GithubCorner,
-    // PanelGroup,
     LineChart,
-    // RaddarChart,
     PieChart,
     BarChart
-    // TransactionTable,
-    // TodoList,
-    // BoxCard
   },
   data() {
     return {
       lineChartData: {},
       pieChartData: {},
+      barChartData: {},
 
-      // lineChartData: {
-      //   expectedData: [100, 120, 161, 134, 105, 160, 165],
-      //   actualData: [120, 82, 91, 154, 162, 140, 145]
-      // },
-      // pieChartData: {
-      //   hosts: ["a.sechack-z.org", "b.sechack-z.org"],
-      //   pieChartData: [
-      //     { value: 320, name: "a.sechack-z.org" },
-      //     { value: 240, name: "b.sechack-z.org" }
-      //   ]
-      // },
-      islineChartData: false,
-      isPieChartData: false
+      isFetched: false
     }
   },
   mounted() {
     axios.get('/api/alp').then(response => {
-      this.islineChartData = true
-      this.isPieChartData = true
       this.lineChartData = {
         expectedData: [100, 120, 161, 134, 105, 160, 165],
         actualData: [120, 82, 91, 154, 162, 140, 145]
@@ -131,13 +54,19 @@ export default {
           { value: 240, name: 'b.sechack-z.org' }
         ]
       }
+      this.barChartData = [
+        { host: 'a.sechack-z.org', count: [79, 52, 200, 334, 390, 330, 220] },
+        { host: 'b.sechack-z.org', count: [80, 52, 200, 334, 390, 330, 220] }
+      ]
+
+      this.isFetched = true
     })
-  },
-  methods: {
-    handleSetLineChartData(type) {
-      this.lineChartData = lineChartData
-    }
   }
+  // methods: {
+  //   handleSetLineChartData(type) {
+  //     this.lineChartData = lineChartData
+  //   }
+  // }
 }
 </script>
 

@@ -23,20 +23,24 @@ export default {
     height: {
       type: String,
       default: '300px'
+    },
+    chartData: {
+      type: Object,
+      required: true
     }
   },
   data() {
     return {
-      chart: null,
-      data: {
-        hosts: ['a.sechack-z.org', 'b.sechack-z.org'],
-        accessLog: [
-          { host: 'a.sechack-z.org', count: [79, 52, 200, 334, 390, 330, 220] },
-          { host: 'b.sechack-z.org', count: [80, 52, 200, 334, 390, 330, 220] }
-        ]
-      }
+      chart: null
     }
   },
+  watch: {
+    chartData: {
+      deep: true,
+      handler(val) {
+        this.setOption(val)
+      }
+    }},
   mounted() {
     this.$nextTick(() => {
       this.initChart()
@@ -52,6 +56,18 @@ export default {
   methods: {
     initChart() {
       this.chart = echarts.init(this.$el, 'macarons')
+
+      const seriesData = this.chartData.map(d => {
+        return {
+          name: d.host,
+          type: 'bar',
+          stack: 'visitors',
+          barWidth: '60%',
+          data: d.count,
+          animationDuration
+        }
+      })
+      console.log(this.chartData, seriesData)
 
       this.chart.setOption({
         tooltip: {
@@ -80,21 +96,22 @@ export default {
             show: false
           }
         }],
-        series: [{
-          name: 'a.sechack-z.org',
-          type: 'bar',
-          stack: 'vistors',
-          barWidth: '60%',
-          data: [79, 52, 200, 334, 390, 330, 220],
-          animationDuration
-        }, {
-          name: 'b.sechack-z.org',
-          type: 'bar',
-          stack: 'vistors',
-          barWidth: '60%',
-          data: [80, 52, 200, 334, 390, 330, 220],
-          animationDuration
-        }]
+        series: seriesData
+        // series: [{
+        //   name: 'a.sechack-z.org',
+        //   type: 'bar',
+        //   stack: 'vistors',
+        //   barWidth: '60%',
+        //   data: [79, 52, 200, 334, 390, 330, 220],
+        //   animationDuration
+        // }, {
+        //   name: 'b.sechack-z.org',
+        //   type: 'bar',
+        //   stack: 'vistors',
+        //   barWidth: '60%',
+        //   data: [80, 52, 200, 334, 390, 330, 220],
+        //   animationDuration
+        // }]
       })
     }
   }

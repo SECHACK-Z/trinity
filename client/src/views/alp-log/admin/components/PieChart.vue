@@ -54,7 +54,6 @@ export default {
   },
   methods: {
     initChart() {
-      console.log(this.chartData)
       this.chart = echarts.init(this.$el, 'macarons')
       this.chart.setOption({
         tooltip: {
