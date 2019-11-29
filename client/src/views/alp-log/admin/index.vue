@@ -1,18 +1,18 @@
 <template>
   <div class="dashboard-editor-container">
     <el-row style="background:#fff;padding:16px 16px 0;margin-bottom:32px;">
-      <line-chart v-if="isFetched" :chart-data="lineChartData" />
+      <line-chart v-if="isFetched" :chart-data="chartData" />
     </el-row>
 
     <el-row :gutter="32">
       <el-col :xs="24" :sm="24" :lg="8">
         <div v-if="isFetched" class="chart-wrapper">
-          <pie-chart :chart-data="pieChartData" />
+          <pie-chart :chart-data="chartData" />
         </div>
       </el-col>
       <el-col :xs="24" :sm="24" :lg="8">
         <div v-if="isFetched" class="chart-wrapper">
-          <bar-chart :chart-data="barChartData" />
+          <bar-chart :chart-data="chartData" />
         </div>
       </el-col>
     </el-row>
@@ -34,55 +34,45 @@ export default {
   },
   data() {
     return {
-      lineChartData: {},
-      pieChartData: {},
-      barChartData: {},
-
+      chartData: {},
       isFetched: false
     }
   },
   mounted() {
     axios.get('/api/rawLog').then(response => {
-      console.log(response)
-      // const nameOfDay = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
-      const group = response.data.reduce(function(result, current) {
+      const data = response.data
+      const aggregateData = data.reduce(function(result, current) {
         const element = result.find(function(p) {
           return p.name === current.host
         })
+        const date = new Date(current.time)
+
         if (element) {
-          element.value++ // count
+          element.count[date.getDay()]++
         } else {
-          result.push({
+          const tmpData = {
             name: current.host,
-            value: 1
-          })
+            count: [0, 0, 0, 0, 0, 0, 0]
+          }
+          tmpData.count[date.getDay()]++
+          result.push(tmpData)
         }
         return result
       }, [])
-      const hosts = group.map(l => l.name)
-      console.log(hosts)
-      console.log(group)
-      this.lineChartData = { hosts: ['a.sechack-z.org', 'b.sechack-z.org'],
-        expectedData: [79, 52, 200, 334, 390, 330, 220],
-        actualData: [30, 100, 150, 450, 250, 100, 120]
-      }
-      this.pieChartData = {
-        hosts: hosts,
-        pieChartData: group
-      }
-      this.barChartData = [
-        { host: 'a.sechack-z.org', count: [79, 52, 200, 334, 390, 330, 220] },
-        { host: 'b.sechack-z.org', count: [80, 52, 200, 334, 390, 330, 220] }
-      ]
 
+      const group = aggregateData.map(l => {
+        const sum = l.count.reduce((r, c) => r + c)
+        l['value'] = sum
+        // 月曜始まりにする
+        const head = l.count.shift()
+        l.count.push(head)
+        return l
+      })
+
+      this.chartData = group
       this.isFetched = true
     })
   }
-  // methods: {
-  //   handleSetLineChartData(type) {
-  //     this.lineChartData = lineChartData
-  //   }
-  // }
 }
 </script>
 

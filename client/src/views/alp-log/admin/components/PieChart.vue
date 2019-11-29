@@ -54,6 +54,7 @@ export default {
   },
   methods: {
     initChart() {
+      console.log('pie', this.chartData.pieChartData)
       this.chart = echarts.init(this.$el, 'macarons')
       this.chart.setOption({
         tooltip: {
@@ -63,7 +64,7 @@ export default {
         legend: {
           left: 'center',
           bottom: '10',
-          data: this.chartData.hosts
+          data: this.chartData.map(l => l.name)
         },
         series: [
           {
@@ -72,7 +73,7 @@ export default {
             roseType: 'radius',
             radius: [15, 95],
             center: ['50%', '38%'],
-            data: this.chartData.pieChartData,
+            data: this.chartData,
             animationEasing: 'cubicInOut',
             animationDuration: 2600
           }

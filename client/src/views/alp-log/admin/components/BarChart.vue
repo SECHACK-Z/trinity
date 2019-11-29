@@ -59,7 +59,7 @@ export default {
 
       const seriesData = this.chartData.map(d => {
         return {
-          name: d.host,
+          name: d.name,
           type: 'bar',
           stack: 'visitors',
           barWidth: '60%',

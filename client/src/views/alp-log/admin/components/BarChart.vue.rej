@@ -1,0 +1,29 @@
+diff a/client/src/views/alp-log/admin/components/BarChart.vue b/client/src/views/alp-log/admin/components/BarChart.vue	(rejected hunks)
+@@ -34 +34 @@ export default {
+-      chart: null,
++      chart: null
+@@ -37 +37 @@ export default {
+-    watch: {
++  watch: {
+@@ -40 +40 @@ export default {
+-      handler(val){
++      handler(val) {
+@@ -61,9 +61,9 @@ export default {
+-          return {
+-            name: d.host,
+-            type: 'bar',
+-            stack: 'visitors',
+-            barWidth: '60%',
+-            data: d.count,
+-            animationDuration
+-          }
+-        })
++        return {
++          name: d.host,
++          type: 'bar',
++          stack: 'visitors',
++          barWidth: '60%',
++          data: d.count,
++          animationDuration
++        }
++      })
