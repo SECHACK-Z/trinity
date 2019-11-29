@@ -5,11 +5,10 @@ type Config struct {
 }
 
 type Target struct {
-	Proxy      string `json:"proxy"`
-	Host       string `json:"host"`
-	Https      bool   `json:"https"`
-	ForceHttps bool   `json:"forceHttps"`
-	Default    bool   `json:"default"`
+	Proxy       string `json:"proxy"`
+	Host        string `json:"host"`
+	Https       bool   `json:"https"`
+	ForceHttps  bool   `json:"forceHttps"`
+	Default     bool   `json:"default"`
+	HealthCheck bool   `json:healthCheck`
 }
-
-

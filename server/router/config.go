@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func(r *router) getConfig (c echo.Context) error {
+func (r *router) getConfig(c echo.Context) error {
 	config := r.manager.Config.Get()
 	buf, err := yaml.Marshal(config)
 	if err != nil {
@@ -20,7 +20,7 @@ func(r *router) getConfig (c echo.Context) error {
 	})
 }
 
-func(r *router) postConfig (c echo.Context) error {
+func (r *router) postConfig(c echo.Context) error {
 	req := &struct {
 		Yaml string `json:"yaml"`
 	}{}
@@ -37,7 +37,7 @@ func(r *router) postConfig (c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-func(r *router) postSaveConfig (c echo.Context) error {
+func (r *router) postSaveConfig(c echo.Context) error {
 	req := &struct {
 		Name string `json:"name"`
 		Yaml string `json:"yaml"`

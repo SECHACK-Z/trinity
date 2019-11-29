@@ -7,12 +7,11 @@ import (
 	"time"
 )
 
-type myTransport struct{
+type myTransport struct {
 }
 
 func New() *myTransport {
-	return &myTransport{
-	}
+	return &myTransport{}
 }
 
 func (t *myTransport) RoundTrip(req *http.Request) (*http.Response, error) {
