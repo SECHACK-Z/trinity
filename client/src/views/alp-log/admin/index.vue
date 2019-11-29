@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard-editor-container">
+  <div v-if="isFetched" class="dashboard-editor-container">
     <el-row style="background:#fff;padding:16px 16px 0;margin-bottom:32px;">
       <line-chart v-if="isFetched" :chart-data="chartData" />
     </el-row>
@@ -16,6 +16,19 @@
         </div>
       </el-col>
     </el-row>
+
+    <el-row :gutter="8">
+      <el-col
+        :xs="{ span: 24 }"
+        :sm="{ span: 24 }"
+        :md="{ span: 24 }"
+        :lg="{ span: 12 }"
+        :xl="{ span: 12 }"
+        style="padding-right:8px;margin-bottom:30px;"
+      >
+        <transaction-table :chart-data="accessData" />
+      </el-col>
+    </el-row>
   </div>
 </template>
 
@@ -23,6 +36,7 @@
 import LineChart from './components/LineChart'
 import PieChart from './components/PieChart'
 import BarChart from './components/BarChart'
+import TransactionTable from './components/TransactionTable'
 import axios from 'axios'
 
 export default {
@@ -30,11 +44,13 @@ export default {
   components: {
     LineChart,
     PieChart,
-    BarChart
+    BarChart,
+    TransactionTable
   },
   data() {
     return {
       chartData: {},
+      accessData: {},
       isFetched: false
     }
   },
@@ -70,7 +86,12 @@ export default {
       })
 
       this.chartData = group
-      this.isFetched = true
+    }).then(() => {
+      axios.get('/api/accessLog').then(response => {
+        console.log('accessLog', response)
+        this.accessData = response.data
+        this.isFetched = true
+      })
     })
   }
 }

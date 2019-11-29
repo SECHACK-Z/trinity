@@ -1,13 +1,15 @@
 <template>
   <el-table :data="list" style="width: 100%;padding-top: 15px;">
-    <el-table-column label="Order_No" min-width="200">
+    <el-table-column label="URI" min-width="200">
       <template slot-scope="scope">
-        {{ scope.row.order_no | orderNoFilter }}
+        <!-- {{ scope.row.uri | orderNoFilter }} -->
+        {{ scope.row.uri }}
       </template>
     </el-table-column>
-    <el-table-column label="Price" width="195" align="center">
+    <el-table-column label="Method" width="195" align="center">
       <template slot-scope="scope">
-        ¥{{ scope.row.price | toThousandFilter }}
+        <!-- ¥{{ scope.row.method | toThousandFilter }} -->
+        {{ scope.row.method }}
       </template>
     </el-table-column>
     <el-table-column label="Status" width="100" align="center">
@@ -21,14 +23,14 @@
 </template>
 
 <script>
-import { transactionList } from '@/api/remote-search'
-
+// import { transactionList } from '@/api/remote-search'
+import axios from 'axios'
 export default {
   filters: {
     statusFilter(status) {
       const statusMap = {
-        success: 'success',
-        pending: 'danger'
+        200: 'success',
+        404: 'danger'
       }
       return statusMap[status]
     },
@@ -36,9 +38,23 @@ export default {
       return str.substring(0, 30)
     }
   },
+  props: {
+    chartData: {
+      type: Object,
+      required: true
+    }
+  },
   data() {
     return {
       list: null
+    }
+  },
+  watch: {
+    chartData: {
+      deep: true,
+      handler(val) {
+        this.setOptions(val)
+      }
     }
   },
   created() {
@@ -46,9 +62,14 @@ export default {
   },
   methods: {
     fetchData() {
-      transactionList().then(response => {
-        this.list = response.data.items.slice(0, 8)
+      axios.get('/api/accessLog').then(response => {
+        console.log('accessLog', response)
+        this.list = response.data.reverse().slice(0, 8)
       })
+      // transactionList().then(response => {
+      //   console.log("tran", "response.data)
+      //   this.list = response.data.slice(0, 8)
+      // })
     }
   }
 }
