@@ -33,6 +33,7 @@ func (r *router) SetUp(e *echo.Echo) error {
 	api.GET("/ping", r.ping)
 	api.GET("/log", r.getLog)
 	api.GET("/alp", r.getALP)
+	api.GET("/rawLog", r.getRawLogs)
 
 	api.GET("/config", r.getConfig)
 	api.POST("/config", r.postConfig)
@@ -73,7 +74,16 @@ func (r *router) getLog(c echo.Context) error {
 }
 
 func (r *router) getALP(c echo.Context) error {
-	out, err := exec.Command("sh", "-c", "cat logFile | alp --sort=max ltsv").Output()
+	out, err := exec.Command("sh", "-c", "cat accessLog | alp --sort=max ltsv").Output()
+	if err != nil {
+		pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.ERROR, Message: err.Error()})
+	}
+	return c.String(200, string(out))
+}
+
+func (r *router) getRawLogs(c echo.Context) error {
+	// out, err := exec.Command("sh", "-c", "cat accessLog | ltsv2json | jq -c '[.[].host] | group_by(.) | map({(.[0]): length})'").Output()
+	out, err := exec.Command("sh", "-c", "cat accessLog | ltsv2json | jq -c '.[]| {time, host}' | jq -s").Output()
 	if err != nil {
 		pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.ERROR, Message: err.Error()})
 	}
