@@ -20,8 +20,8 @@ func StartSystemLogger() {
 	if err != nil {
 		//log.Fatalf("cannot open systemlog")
 	}
-	logger := &systemLogger {
-		logFile:systemLogFile,
+	logger := &systemLogger{
+		logFile: systemLogFile,
 	}
 	log.SetOutput(io.MultiWriter(logger.logFile, os.Stdout))
 

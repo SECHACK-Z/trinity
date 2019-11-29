@@ -81,3 +81,29 @@ func (ps *__UpdateConfigPubSub) Pub(event UpdateConfig) {
 		go f(event)
 	}
 }
+
+// TODO: Close処理
+type __HealthCheckPubSub struct {
+	subs map[string]func(HealthCheck)
+	c    chan HealthCheck
+}
+
+var HealthCheckEvent = &__HealthCheckPubSub{
+	subs: make(map[string]func(HealthCheck)),
+	c:    make(chan HealthCheck, 10),
+}
+
+func (ps *__HealthCheckPubSub) Sub(f func(et HealthCheck)) string {
+	subID := randomStr(5)
+	for _, ok := ps.subs[subID]; ok; _, ok = ps.subs[subID] {
+		subID = randomStr(5)
+	}
+	ps.subs[subID] = f
+	return subID
+}
+
+func (ps *__HealthCheckPubSub) Pub(event HealthCheck) {
+	for _, f := range ps.subs {
+		go f(event)
+	}
+}

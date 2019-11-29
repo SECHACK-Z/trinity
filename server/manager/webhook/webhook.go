@@ -10,7 +10,6 @@ import (
 	"time"
 )
 
-
 type WebhookManager struct {
 	db *gorm.DB
 }
@@ -19,6 +18,7 @@ func New(db *gorm.DB) *WebhookManager {
 	db.AutoMigrate(&Webhook{}, &WebhookEvent{})
 	webhookManager := &WebhookManager{db: db}
 	pubsub.UpdateConfigEvent.Sub(webhookManager.onUpdateConfig)
+	pubsub.HealthCheckEvent.Sub(webhookManager.onHealthCheck)
 	return webhookManager
 }
 
@@ -48,6 +48,22 @@ func (m *WebhookManager) onUpdateConfig(event pubsub.UpdateConfig) {
 	}
 	for _, webhook := range webhooks {
 		go callWebhook(webhook)
+	}
+}
+
+func (m *WebhookManager) onHealthCheck(event pubsub.HealthCheck) {
+	if 400 <= event.Status {
+		webhooks, err := m.GetWebhooksByEvent("poi")
+		if err != nil {
+			pubsub.SystemEvent.Pub(pubsub.System{
+				Time:    time.Now(),
+				Type:    systemevent.ERROR,
+				Message: err.Error(),
+			})
+		}
+		for _, webhook := range webhooks {
+			go callWebhook(webhook)
+		}
 	}
 }
 
@@ -108,6 +124,7 @@ func (m *WebhookManager) GetWebhooksByEvent(eventName string) ([]*Webhook, error
 }
 
 func (m *WebhookManager) UpdateWebhook(webhook *Webhook) error {
+	m.db.Model(webhook).Association("Event").Replace(webhook.Event)
 	return m.db.Save(webhook).Error
 }
 

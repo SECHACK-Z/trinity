@@ -20,14 +20,14 @@ import (
 
 	"golang.org/x/crypto/acme/autocert"
 
-	_ "main/statik"
 	_ "github.com/mattn/go-sqlite3"
+	_ "main/statik"
 
 	"github.com/labstack/echo/v4"
 )
 
 var (
-	Logs       []logger.LogType
+	Logs []logger.LogType
 )
 
 // NewMultipleHostReverseProxy creates a reverse proxy that will randomly
@@ -67,13 +67,14 @@ func getDatabase() (*gorm.DB, error) {
 }
 
 func main() {
+	fmt.Println("poi")
+
 	engine, err := getDatabase()
 	if err != nil {
 		panic(err)
 	}
 
 	pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.SERVER_START})
-
 
 	manager := manager.New(engine)
 
