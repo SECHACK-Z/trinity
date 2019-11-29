@@ -102,5 +102,5 @@ func (r *router) getAccessLog(c echo.Context) error {
 }
 
 func (r *router) defaultBackend(c echo.Context) error {
-	return c.String(404, "Not Found")
+	return c.HTML(200, "<h1>Welcome to <かっこいい名前></h1>")
 }
