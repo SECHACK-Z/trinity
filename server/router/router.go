@@ -3,6 +3,7 @@ package router
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/rakyll/statik/fs"
 	"github.com/ymotongpoo/goltsv"
@@ -85,7 +86,7 @@ func (r *router) getALP(c echo.Context) error {
 func (r *router) getRawLogs(c echo.Context) error {
 	// out, err := exec.Command("sh", "-c", "cat accessLog | ltsv2json | jq -c '[.[].host] | group_by(.) | map({(.[0]): length})'").Output()
 	// time と host のみ出す
-	out, err := exec.Command("sh", "-c", "cat accessLog | ltsv2json | jq -c '.[]| {time, host}' | jq -s").Output()
+	out, err := exec.Command("sh", "-c", "cat accessLog | ltsv2json | jq -c '{time, host}' | jq -s").Output()
 	if err != nil {
 		pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.ERROR, Message: err.Error()})
 	}
@@ -93,7 +94,9 @@ func (r *router) getRawLogs(c echo.Context) error {
 }
 
 func (r *router) getAccessLog(c echo.Context) error {
-	out, err := exec.Command("sh", "-c", "cat accessLog | ltsv2json | jq -c '.[]| {uri, method, status}' | jq -s").Output()
+	out, err := exec.Command("sh", "-c", "cat accessLog | ltsv2json | jq -c '{uri, method, status}' | jq -s").Output()
+	fmt.Println(string(out))
+	fmt.Println(err)
 	if err != nil {
 		pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.ERROR, Message: err.Error()})
 	}

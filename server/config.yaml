@@ -1,12 +1,6 @@
 targets:
-- proxy: localhost:9091
-  host: a.sechack-z.org
-  https: true
-  forcehttps: false
-  default: true
-  healthcheck: false
 - proxy: localhost:9092
-  host: b.sechack-z.org
+  host: a.sechack.org
   https: false
   forcehttps: false
   default: false

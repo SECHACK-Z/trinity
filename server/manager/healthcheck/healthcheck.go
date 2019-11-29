@@ -40,6 +40,7 @@ func (m *HealthCheckManager) AddHealthCheck(target string) {
 }
 
 func (m *HealthCheckManager) run(target string) {
+	// TODO: contextを使ってリセットを実装する
 	ticker := time.Tick(10 * time.Second)
 	for {
 		select {

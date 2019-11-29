@@ -61,6 +61,8 @@ export default {
   }
 
   .CodeMirror {
-    line-height: 18px;
+    /*line-height: 18px;*/
+    line-height: 1.4em;
+    font-size: 5em;
   }
 </style>

@@ -122,6 +122,18 @@ export const constantRoutes = [
     ]
   },
   {
+    path: '/alp',
+    component: Layout,
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/views/alp-log/index'),
+        name: 'alp',
+        meta: { title: 'log', icon: 'clipboard' }
+      }
+    ]
+  },
+  {
     path: '/documentation',
     component: Layout,
     children: [
@@ -406,18 +418,6 @@ export const asyncRoutes = [
         component: () => import('@/views/clipboard/index'),
         name: 'ClipboardDemo',
         meta: { title: 'Clipboard', icon: 'clipboard' }
-      }
-    ]
-  },
-  {
-    path: '/alp',
-    component: Layout,
-    children: [
-      {
-        path: 'index',
-        component: () => import('@/views/alp-log/index'),
-        name: 'alp',
-        meta: { title: 'log', icon: 'clipboard' }
       }
     ]
   },

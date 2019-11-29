@@ -66,7 +66,7 @@ export default {
   computed: {
     options() {
       return this.allOptions.filter(opt => {
-        return !this.webhook.event.find(e => e.event === opt)
+        return !(this.webhook.event || []).find(e => e.event === opt)
       })
     }
   },
@@ -82,7 +82,8 @@ export default {
         this.webhook = {
           url: '',
           body: '',
-          header: []
+          header: [],
+          event: []
         }
       } else {
         const res = await getWebhooks()

@@ -7,16 +7,21 @@ import (
 	"main/pubsub"
 	"main/pubsub/systemevent"
 	"net/http"
+	"strings"
 	"time"
 )
 
 type WebhookManager struct {
 	db *gorm.DB
+	statusMap map[string]int
 }
 
 func New(db *gorm.DB) *WebhookManager {
 	db.AutoMigrate(&Webhook{}, &WebhookEvent{})
-	webhookManager := &WebhookManager{db: db}
+	webhookManager := &WebhookManager{
+		db: db,
+		statusMap: make(map[string]int),
+	}
 	pubsub.UpdateConfigEvent.Sub(webhookManager.onUpdateConfig)
 	pubsub.HealthCheckEvent.Sub(webhookManager.onHealthCheck)
 	return webhookManager
@@ -46,14 +51,19 @@ func (m *WebhookManager) onUpdateConfig(event pubsub.UpdateConfig) {
 			Message: err.Error(),
 		})
 	}
+	message := "新しいコンフィグが適用されました"
 	for _, webhook := range webhooks {
-		go callWebhook(webhook)
+		go callWebhook(webhook, message)
 	}
 }
 
 func (m *WebhookManager) onHealthCheck(event pubsub.HealthCheck) {
-	if 400 <= event.Status {
-		webhooks, err := m.GetWebhooksByEvent("poi")
+	pre, ok := m.statusMap[event.Target]
+	if !ok {
+		pre = 200
+	}
+	if pre < 400 && 400 <= event.Status {
+		webhooks, err := m.GetWebhooksByEvent("po")
 		if err != nil {
 			pubsub.SystemEvent.Pub(pubsub.System{
 				Time:    time.Now(),
@@ -61,14 +71,33 @@ func (m *WebhookManager) onHealthCheck(event pubsub.HealthCheck) {
 				Message: err.Error(),
 			})
 		}
+		message := event.Target + " のヘルスチェックに失敗しました"
 		for _, webhook := range webhooks {
-			go callWebhook(webhook)
+			go callWebhook(webhook, message)
 		}
 	}
+
+	if pre > 400 && 400 > event.Status {
+		webhooks, err := m.GetWebhooksByEvent("po")
+		if err != nil {
+			pubsub.SystemEvent.Pub(pubsub.System{
+				Time:    time.Now(),
+				Type:    systemevent.ERROR,
+				Message: err.Error(),
+			})
+		}
+		message := event.Target + " が回復しました"
+		for _, webhook := range webhooks {
+			go callWebhook(webhook, message)
+		}
+	}
+
+	m.statusMap[event.Target] = event.Status
 }
 
-func callWebhook(webhook *Webhook) (*http.Response, error) {
-	req, err := http.NewRequest("POST", webhook.URL, bytes.NewReader([]byte(webhook.Body)))
+func callWebhook(webhook *Webhook, message string) (*http.Response, error) {
+	body := strings.ReplaceAll(webhook.Body, "<message>", message)
+	req, err := http.NewRequest("POST", webhook.URL, bytes.NewReader([]byte(body)))
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +153,7 @@ func (m *WebhookManager) GetWebhooksByEvent(eventName string) ([]*Webhook, error
 }
 
 func (m *WebhookManager) UpdateWebhook(webhook *Webhook) error {
-	m.db.Model(webhook).Association("Event").Replace(webhook.Event)
+	m.db.Model(&Webhook{}).Association("Event").Replace(webhook.Event)
 	return m.db.Save(webhook).Error
 }
 
