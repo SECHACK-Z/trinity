@@ -42,17 +42,33 @@ export default {
     }
   },
   mounted() {
-    axios.get('/api/alp').then(response => {
-      this.lineChartData = {
-        expectedData: [100, 120, 161, 134, 105, 160, 165],
-        actualData: [120, 82, 91, 154, 162, 140, 145]
+    axios.get('/api/rawLog').then(response => {
+      console.log(response)
+      // const nameOfDay = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
+      const group = response.data.reduce(function(result, current) {
+        const element = result.find(function(p) {
+          return p.name === current.host
+        })
+        if (element) {
+          element.value++ // count
+        } else {
+          result.push({
+            name: current.host,
+            value: 1
+          })
+        }
+        return result
+      }, [])
+      const hosts = group.map(l => l.name)
+      console.log(hosts)
+      console.log(group)
+      this.lineChartData = { hosts: ['a.sechack-z.org', 'b.sechack-z.org'],
+        expectedData: [79, 52, 200, 334, 390, 330, 220],
+        actualData: [30, 100, 150, 450, 250, 100, 120]
       }
       this.pieChartData = {
-        hosts: ['a.sechack-z.org', 'b.sechack-z.org'],
-        pieChartData: [
-          { value: 320, name: 'a.sechack-z.org' },
-          { value: 240, name: 'b.sechack-z.org' }
-        ]
+        hosts: hosts,
+        pieChartData: group
       }
       this.barChartData = [
         { host: 'a.sechack-z.org', count: [79, 52, 200, 334, 390, 330, 220] },
