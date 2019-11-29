@@ -31,6 +31,7 @@ func (r *router) SetUp(e *echo.Echo) error {
 
 	api := e.Group("/api")
 
+	api.GET("/404", r.defaultBackend)
 	api.GET("/ping", r.ping)
 	api.GET("/log", r.getLog)
 	api.GET("/alp", r.getALP)
@@ -101,4 +102,8 @@ func (r *router) getAccessLog(c echo.Context) error {
 		pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.ERROR, Message: err.Error()})
 	}
 	return c.String(200, string(out))
+}
+
+func (r *router) defaultBackend(c echo.Context) error {
+	return c.HTML(200, "<h1>Welcome to <かっこいい名前></h1>")
 }
