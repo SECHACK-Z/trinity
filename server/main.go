@@ -46,11 +46,15 @@ func NewMultipleHostReverseProxy(conf config.Config) *httputil.ReverseProxy {
 		for _, target := range conf.Targets {
 			if target.Default {
 				req.URL.Scheme = "http"
-				req.URL.Host = "localhost:8080" // webuiの portに合わせる
-				req.URL.Path = "/api/404"
+				req.URL.Host = target.Proxy
+				log.Printf("proxy to %s\n", target.Proxy)
 				return
 			}
 		}
+
+		req.URL.Scheme = "http"
+		req.URL.Host = "localhost:8080" // webuiの portに合わせる
+		req.URL.Path = "/api/404"
 	}
 
 	return &httputil.ReverseProxy{Director: director}
