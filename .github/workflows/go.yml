@@ -44,5 +44,5 @@ jobs:
         run: go get golang.org/x/lint/golint
       - name: install bundler
         run:
-          apt-get install bundle
+          cd server
           bundle install
