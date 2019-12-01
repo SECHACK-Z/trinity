@@ -24,6 +24,10 @@ GEM
       no_proxy_fix
       octokit (~> 4.7)
       terminal-table (~> 1)
+    danger-go (0.0.5)
+      danger-plugin-api (~> 1.0)
+    danger-plugin-api (1.0.0)
+      danger (> 2.0)
     faraday (0.17.1)
       multipart-post (>= 1.2, < 3)
     faraday-http-cache (2.0.0)
@@ -51,6 +55,7 @@ PLATFORMS
 
 DEPENDENCIES
   danger
+  danger-go
 
 BUNDLED WITH
    2.0.2
