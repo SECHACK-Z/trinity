@@ -43,6 +43,6 @@ jobs:
       - name: Install Golint
         run: go get golang.org/x/lint/golint
       - name: install bundler
-        run:
+        run: |
           cd server
           bundle install
