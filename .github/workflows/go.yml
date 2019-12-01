@@ -34,7 +34,6 @@ jobs:
   danger:
     name: Danger
     runs-on: ubuntu-latest
-    working-directory: server
     steps:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v1
@@ -50,8 +49,8 @@ jobs:
       - name: Install Golint
         run: go get golang.org/x/lint/golint
       - name: install bundler
-        run: |
-          gem install bundler:2.0.2
+        working-directory: server
+        run: gem install bundler:2.0.2
       - name: bundle install
-        run: |
-          bundle install
+        working-directory: server
+        run: bundle install
