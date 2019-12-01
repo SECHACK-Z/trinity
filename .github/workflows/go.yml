@@ -27,7 +27,7 @@ jobs:
       run: |
         cd server
         go build -v .
-    - name: Run Server
+    - name: Test
       run: |
         cd server
-        go run main.go
+        go test
