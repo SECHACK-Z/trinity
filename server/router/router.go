@@ -2,7 +2,6 @@ package router
 
 import (
 	"bytes"
-	"encoding/json"
 	"io/ioutil"
 	"main/manager"
 	"main/pubsub"
@@ -68,8 +67,7 @@ func (r *router) getRawLogs(c echo.Context) error {
 
 	reader := goltsv.NewReader(b)
 	records, _ := reader.ReadAll()
-	bytes, _ := json.Marshal(records)
-	return c.String(200, string(bytes))
+	return c.JSON(200, records) //内部的にJSON.marshalしているらしい
 }
 
 func (r *router) defaultBackend(c echo.Context) error {

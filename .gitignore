@@ -74,3 +74,6 @@ accessLog
 server/tmp/runner-build
 server/gin-bin
 server/config.yaml
+statik/
+./go.mod
+./go.sum
