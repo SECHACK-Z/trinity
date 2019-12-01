@@ -47,4 +47,5 @@ jobs:
       - name: install bundler
         run: |
           cd server
+          gem install
           bundle install
