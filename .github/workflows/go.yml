@@ -49,7 +49,7 @@ jobs:
         run: gem install bundler:2.0.2
       - name: bundle install
         working-directory: server
-        run: bundle install
+        run: bundle install --path vendor/bundle
       - name: run danger
         run: bundle exec danger
         working-directory: server
