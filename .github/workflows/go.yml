@@ -53,4 +53,6 @@ jobs:
           cd server
           gem install bundler:2.0.2
       - name: bundle install
-        run: bundle install
+        run: |
+          cd server
+          bundle install
