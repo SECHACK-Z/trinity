@@ -35,6 +35,8 @@ jobs:
     name: Danger
     runs-on: ubuntu-latest
     steps:
+      - name: Check out code into the Go module directory
+          uses: actions/checkout@v1
       - name: Setup Go 1.13
         uses: actions/setup-go@v1
         with:
@@ -44,7 +46,5 @@ jobs:
         run: go get golang.org/x/lint/golint
       - name: install bundler
         run: |
-          pwd
-          ls
-          cd ../server
+          cd server
           bundle install
