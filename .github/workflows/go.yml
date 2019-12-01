@@ -46,7 +46,7 @@ jobs:
         run: go get golang.org/x/lint/golint
       - name: install bundler
         working-directory: server
-        run: gem install bundler:2.0.2
+        run: gem install bundler
       - name: bundle install
         working-directory: server
         run: bundle install --path vendor/bundle
