@@ -51,6 +51,6 @@ jobs:
         working-directory: server
         run: bundle install
       - name: run danger
-        run: danger
+        run: bundle exec danger
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
