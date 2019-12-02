@@ -1,0 +1,9 @@
+.idea
+test
+
+client/node_modules
+client/dist
+
+server/accessLog
+server/proxy.db
+server/systemLog
