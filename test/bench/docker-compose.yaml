@@ -1,0 +1,22 @@
+version: "2"
+services:
+  reverse-proxy:
+    build: ../../
+    volumes:
+    - ./reverse-proxy/config.yaml:/reverse-proxy/config.yaml
+  nginx:
+    image: nginx:stable-alpine
+    volumes:
+    - ./nginx/bench.test.conf:/etc/nginx/conf.d/bench.test.conf
+  apache:
+    image: httpd:alpine
+    volumes:
+    - ./apache/httpd.conf:/usr/local/apache2/conf/httpd.conf
+  ping-pong:
+    image: briceburg/ping-pong
+  bench:
+    image: jordi/ab
+    volumes:
+    - ./bench.sh:/bench.sh
+    entrypoint: /bench.sh
+    command: -n 10000 -c 100
