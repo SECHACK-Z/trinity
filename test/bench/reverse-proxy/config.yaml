@@ -1,0 +1,4 @@
+targets:
+  - proxy: ping-pong:80
+    host: bench.test
+    default: true
