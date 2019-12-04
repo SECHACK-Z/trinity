@@ -3,6 +3,7 @@ package webhook
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/jinzhu/gorm"
 	"main/pubsub"
 	"main/pubsub/systemevent"
@@ -12,33 +13,19 @@ import (
 )
 
 type WebhookManager struct {
-	db *gorm.DB
+	db        *gorm.DB
 	statusMap map[string]int
 }
 
 func New(db *gorm.DB) *WebhookManager {
-	db.AutoMigrate(&Webhook{}, &WebhookEvent{})
+	db.AutoMigrate(&Webhook{}, &WebhookEvent{}, &WebhookSecret{})
 	webhookManager := &WebhookManager{
-		db: db,
+		db:        db,
 		statusMap: make(map[string]int),
 	}
 	pubsub.UpdateConfigEvent.Sub(webhookManager.onUpdateConfig)
 	pubsub.HealthCheckEvent.Sub(webhookManager.onHealthCheck)
 	return webhookManager
-}
-
-type Webhook struct {
-	gorm.Model
-	URL    string         `json:"url"`
-	Body   string         `json:"body"`
-	Header string         `json:"header"`
-	Event  []WebhookEvent `json:"event"`
-}
-
-type WebhookEvent struct {
-	gorm.Model
-	WebhookID uint   `json:"webhook_id"`
-	Event     string `json:"event"`
 }
 
 func (m *WebhookManager) onUpdateConfig(event pubsub.UpdateConfig) {
@@ -102,9 +89,18 @@ func callWebhook(webhook *Webhook, message string) (*http.Response, error) {
 		return nil, err
 	}
 	var headers map[string]interface{}
+
+	replaceOldNew := make([]string, 0, len(webhook.Secrets)*2)
+	for _, secret := range webhook.Secrets {
+		fmt.Println("secret", secret.PlaceHolder, secret.Secret)
+		replaceOldNew = append(replaceOldNew, secret.PlaceHolder, secret.Secret)
+	}
+
+	replacer := strings.NewReplacer(replaceOldNew...)
 	json.Unmarshal([]byte(webhook.Header), &headers)
 	for k, v := range headers {
-		req.Header.Set(k, v.(string))
+		fmt.Println("replaced", replacer.Replace(v.(string)))
+		req.Header.Set(k, replacer.Replace(v.(string)))
 	}
 	res, err := http.DefaultClient.Do(req)
 	return res, err
@@ -126,6 +122,11 @@ func (m *WebhookManager) GetWebhooks() ([]*Webhook, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		err = m.db.Model(webhook).Related(&webhook.Secrets).Error
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return webhooks, nil
@@ -141,6 +142,10 @@ func (m *WebhookManager) GetWebhooksByID(id int) (*Webhook, error) {
 		return nil, err
 	}
 
+	if err := m.db.Model(webhook).Related(&webhook.Secrets).Error; err != nil {
+		return nil, err
+	}
+
 	return webhook, nil
 }
 
@@ -149,11 +154,17 @@ func (m *WebhookManager) GetWebhooksByEvent(eventName string) ([]*Webhook, error
 	if err := m.db.Joins("LEFT JOIN webhook_events ON webhooks.id = webhook_events.webhook_id").Where("webhook_events.event = ?", eventName).Find(&webhooks).Error; err != nil {
 		return nil, err
 	}
+	for _, webhook := range webhooks {
+		if err := m.db.Model(webhook).Related(&webhook.Secrets).Error; err != nil {
+			return nil, err
+		}
+	}
 	return webhooks, nil
 }
 
 func (m *WebhookManager) UpdateWebhook(webhook *Webhook) error {
 	m.db.Model(&Webhook{}).Association("Event").Replace(webhook.Event)
+	m.db.Model(&Webhook{}).Association("Secrets").Replace(webhook.Secrets)
 	return m.db.Save(webhook).Error
 }
 
