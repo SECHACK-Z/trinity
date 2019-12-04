@@ -7,13 +7,21 @@
       <el-form-item label="Body">
         <el-input v-model="webhook.body" />
       </el-form-item>
-      <el-form-item v-for="(header, idx) in webhook.header" label="Header">
+      <el-form-item v-for="(header, idx) in webhook.header" :key="header.key" label="Header">
         <el-input v-model="header.key" />
         <el-input v-model="header.value" />
         <el-button @click="deleteHeader(idx)">Delete Header</el-button>
       </el-form-item>
       <el-form-item>
         <el-button @click="addHeader">New Header</el-button>
+      </el-form-item>
+      <el-form-item v-for="(secret, idx) in webhook.secrets" :key="secret.place_holder" label="Secrets">
+        <el-input v-model="secret.place_holder" />
+        <el-input v-model="secret.secret" />
+        <el-button @click="deleteSecret(idx)">Delete Secret</el-button>
+      </el-form-item>
+      <el-form-item>
+        <el-button @click="addSecret">New Secret</el-button>
       </el-form-item>
       <el-form-item>
         <el-tag
@@ -83,12 +91,13 @@ export default {
           url: '',
           body: '',
           header: [],
-          event: []
+          event: [],
+          secrets: []
         }
       } else {
         const res = await getWebhooks()
         console.log(res)
-        this.webhook = res.find(w => w.ID == this.webhookID)
+        this.webhook = res.find(w => w.ID === Number(this.webhookID))
       }
     },
     deleteHeader(idx) {
@@ -96,6 +105,12 @@ export default {
     },
     addHeader() {
       this.webhook.header.push({ key: '', value: '' })
+    },
+    deleteSecret(idx) {
+      this.webhook.secrets.splice(idx, 1)
+    },
+    addSecret() {
+      this.webhook.secrets.push({ place_holder: '', secret: '' })
     },
     async createWebhook() {
       const res = await postWebhook(this.webhook)

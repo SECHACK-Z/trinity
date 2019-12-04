@@ -4,4 +4,4 @@ targets:
   https: false
   forcehttps: false
   default: false
-  healthcheck: true
+  healthcheck: false
