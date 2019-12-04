@@ -1,9 +1,8 @@
-name: Build
+name: Go
 
 on: [push, pull_request]
 jobs:
   build:
-    name: Build
     runs-on: ubuntu-latest
     steps:
 
@@ -19,7 +18,7 @@ jobs:
         uses: actions/cache@v1.0.3
         with:
           path: ~/npm
-          key: ${{ runner.os }}
+          key: ${{ runner.os }}-npm
 
       - name: Install npm packages
         run: |
@@ -41,7 +40,7 @@ jobs:
         run: |
           cd server
           go get github.com/rakyll/statik
-          statik --src ../client/dist
+          ~/go/bin/statik --src ../client/dist
 
       - name: Use Cache
         uses: actions/cache@preview
