@@ -62,7 +62,7 @@ export default {
   },
   methods: {
     fetchData() {
-      axios.get('/api/accessLog').then(response => {
+      axios.get('/api/logs').then(response => {
         console.log('accessLog', response)
         this.list = response.data.reverse().slice(0, 8)
       })
