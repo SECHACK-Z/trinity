@@ -135,13 +135,21 @@ export const constantRoutes = [
   },
   {
     path: '/documentation',
+    name: 'Documentation',
     component: Layout,
+    meta: { title: 'Documentations', icon: 'documentation', affix: true, path: 'index' },
     children: [
       {
         path: 'index',
         component: () => import('@/views/documentation/index'),
-        name: 'Documentation',
-        meta: { title: 'Documentation', icon: 'documentation', affix: true }
+        name: 'Introduction',
+        meta: { title: 'Introduction', icon: 'documentation', affix: true, path: 'index' }
+      },
+      {
+        path: 'test',
+        component: () => import('@/views/documentation/index'),
+        name: 'nest',
+        meta: { title: 'Documentation', icon: 'documentation', affix: true, path: 'index' }
       }
     ]
   },
