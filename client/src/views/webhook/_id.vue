@@ -7,7 +7,7 @@
       <el-form-item label="Body">
         <el-input v-model="webhook.body" />
       </el-form-item>
-      <el-form-item v-for="(header, idx) in webhook.header" :key="header.key" label="Header">
+      <el-form-item v-for="(header, idx) in webhook.header" :key="idx" label="Header">
         <el-input v-model="header.key" />
         <el-input v-model="header.value" />
         <el-button @click="deleteHeader(idx)">Delete Header</el-button>
@@ -15,7 +15,7 @@
       <el-form-item>
         <el-button @click="addHeader">New Header</el-button>
       </el-form-item>
-      <el-form-item v-for="(secret, idx) in webhook.secrets" :key="secret.place_holder" label="Secrets">
+      <el-form-item v-for="(secret, idx) in webhook.secrets" :key="idx" label="Secrets">
         <el-input v-model="secret.place_holder" />
         <el-input v-model="secret.secret" />
         <el-button @click="deleteSecret(idx)">Delete Secret</el-button>
