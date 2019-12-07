@@ -74,6 +74,8 @@ func (r *router) receiveGitHubWebook(c echo.Context) error {
 				return c.NoContent(200)
 			}
 		}
+
 	}
+	fmt.Println("Webhook was came but no settings found.")
 	return c.NoContent(404)
 }

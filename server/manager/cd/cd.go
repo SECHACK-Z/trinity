@@ -35,8 +35,7 @@ func (m *CDManager) onGetWebhook(getWebhook pubsub.GetWebook) {
 	for index, targetContext := range m.targetContexts {
 		if targetContext.repository == repository {
 			targetContext.canselFunc()
-
-			//remove from m.targetContexts as []targetContext
+			// remove from slice
 			m.targetContexts = append(m.targetContexts[:index], m.targetContexts[index+1:]...)
 		}
 	}
@@ -57,17 +56,15 @@ func (m *CDManager) onGetWebhook(getWebhook pubsub.GetWebook) {
 }
 
 func (m *CDManager) run(repository string, target *targetContext) {
-	if err := os.Mkdir("tmp", 0777); err != nil {
-		fmt.Println(err)
-	}
+	_ = os.Mkdir("repository", 0777)
 	path := strings.Split(repository, "/")
 	repositoryName := path[len(path)-1]
 
-	directoryPath := "./tmp/" + repositoryName
+	directoryPath := "./repository/" + repositoryName
 	_, err := os.Stat(directoryPath)
 	if err != nil {
 		cmd := exec.Command("git", "clone", repository)
-		cmd.Dir = "./tmp"
+		cmd.Dir = "./repository"
 		if out, err := cmd.Output(); err != nil {
 			fmt.Println("git clone failed", string(out))
 			return
