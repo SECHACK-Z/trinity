@@ -4,11 +4,9 @@ import (
 	"context"
 	"fmt"
 	"main/pubsub"
-	"main/pubsub/systemevent"
 	"os"
 	"os/exec"
 	"strings"
-	"time"
 
 	"github.com/jinzhu/gorm"
 )
@@ -34,10 +32,12 @@ func New(db *gorm.DB) *CDManager {
 
 func (m *CDManager) onGetWebhook(getWebhook pubsub.GetWebook) {
 	repository := getWebhook.Repository
-	for _, targetContext := range m.targetContexts {
+	for index, targetContext := range m.targetContexts {
 		if targetContext.repository == repository {
-			m.RegisterContinuousDelivery(&targetContext)
-			break
+			targetContext.canselFunc()
+
+			//remove from m.targetContexts as []targetContext
+			m.targetContexts = append(m.targetContexts[:index], m.targetContexts[index+1:]...)
 		}
 	}
 	path := strings.Split(getWebhook.Repository, "/")
@@ -47,22 +47,12 @@ func (m *CDManager) onGetWebhook(getWebhook pubsub.GetWebook) {
 		ctx:        context.Background(),
 		canselFunc: func() {},
 	}
-	m.targetContexts = append(m.targetContexts, newContext)
-	m.RegisterContinuousDelivery(&m.targetContexts[len(m.targetContexts)-1])
-}
-
-func (m *CDManager) RegisterContinuousDelivery(target *targetContext) {
-	pubsub.SystemEvent.Pub(pubsub.System{
-		Time:    time.Now(),
-		Type:    systemevent.CD_REGISTER,
-		Message: target.repository,
-	})
-
-	target.canselFunc()
 	ctx, cancelFunc := context.WithCancel(context.Background())
-	target.ctx = ctx
-	target.canselFunc = cancelFunc
-	go m.run(target.repository, target)
+	newContext.ctx = ctx
+	newContext.canselFunc = cancelFunc
+
+	m.targetContexts = append(m.targetContexts, newContext)
+	go m.run(repository, &newContext)
 
 }
 
@@ -85,9 +75,8 @@ func (m *CDManager) run(repository string, target *targetContext) {
 	} else {
 		cmd := exec.Command("git", "pull")
 		cmd.Dir = directoryPath
-		if out, err := cmd.Output(); err != nil {
+		if _, err := cmd.Output(); err != nil {
 			fmt.Println("git pull failed")
-			fmt.Println(string(out))
 			return
 		}
 	}
