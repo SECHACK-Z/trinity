@@ -24,7 +24,11 @@ type UpdateConfig struct {
 }
 
 type HealthCheck struct {
-	Target string
-	Status int
+	Target  string
+	Status  int
 	Message string
+}
+
+type getWebook struct {
+	Repository string
 }

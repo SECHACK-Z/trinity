@@ -3,6 +3,8 @@ package router
 import (
 	"fmt"
 	"main/manager/webhook"
+	"main/pubsub"
+
 	"net/http"
 	"strings"
 
@@ -62,9 +64,17 @@ func (r *router) receiveGitHubWebook(c echo.Context) error {
 		release := payload.(github.PushPayload)
 		ref := strings.Split(release.Ref, "/")
 		branch := ref[len(ref)-1]
-		if branch == "master" {
-			fmt.Println(branch)
+		URL := release.Repository.URL
+
+		for _, target := range r.manager.Config.Get().Targets {
+			fmt.Println(target, target.Repository)
+			if target.Repository == URL && "master" == branch {
+				fmt.Printf("New commit is pushed on %s at %s\n", branch, URL)
+				// pubsub.UpdateConfigEvent.Pub(pubsub.UpdateConfig{cm.config})
+				pubsub.UpdateConfigEvent.Pub()
+				return c.String(200, "")
+			}
 		}
 	}
-	return c.String(200, "")
+	return c.String(404, "")
 }

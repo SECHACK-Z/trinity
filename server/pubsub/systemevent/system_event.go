@@ -9,6 +9,6 @@ const (
 	NEW_SETTINGS_APPLY    SystemEventType = "new settings apply"
 	NEW_CONFIG_SAVE       SystemEventType = "new configuration file save"
 	HEALTH_CHECK_REGISTER SystemEventType = "new health check register"
-
-	ERROR SystemEventType = "error"
+	CD_REGISTER           SystemEventType = "new Repository register for CD"
+	ERROR                 SystemEventType = "error"
 )
