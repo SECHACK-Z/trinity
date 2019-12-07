@@ -101,6 +101,8 @@ func main() {
 			if target.Https {
 				httpsHosts = append(httpsHosts, target.Host)
 			}
+			pubsub.GetWebookEvent.Pub(pubsub.GetWebook{Repository: target.Repository})
+
 		}
 		pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.NEW_SETTINGS_APPLY})
 

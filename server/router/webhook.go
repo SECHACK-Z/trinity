@@ -70,11 +70,10 @@ func (r *router) receiveGitHubWebook(c echo.Context) error {
 			fmt.Println(target, target.Repository)
 			if target.Repository == URL && "master" == branch {
 				fmt.Printf("New commit is pushed on %s at %s\n", branch, URL)
-				// pubsub.UpdateConfigEvent.Pub(pubsub.UpdateConfig{cm.config})
-				pubsub.UpdateConfigEvent.Pub()
-				return c.String(200, "")
+				pubsub.GetWebookEvent.Pub(pubsub.GetWebook{Repository: URL})
+				return c.NoContent(200)
 			}
 		}
 	}
-	return c.String(404, "")
+	return c.NoContent(404)
 }

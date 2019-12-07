@@ -107,3 +107,29 @@ func (ps *__HealthCheckPubSub) Pub(event HealthCheck) {
 		go f(event)
 	}
 }
+
+// TODO: Close処理
+type __GetWebookPubSub struct {
+	subs map[string]func(GetWebook)
+	c    chan GetWebook
+}
+
+var GetWebookEvent = &__GetWebookPubSub{
+	subs: make(map[string]func(GetWebook)),
+	c:    make(chan GetWebook, 10),
+}
+
+func (ps *__GetWebookPubSub) Sub(f func(et GetWebook)) string {
+	subID := randomStr(5)
+	for _, ok := ps.subs[subID]; ok; _, ok = ps.subs[subID] {
+		subID = randomStr(5)
+	}
+	ps.subs[subID] = f
+	return subID
+}
+
+func (ps *__GetWebookPubSub) Pub(event GetWebook) {
+	for _, f := range ps.subs {
+		go f(event)
+	}
+}

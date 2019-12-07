@@ -29,6 +29,6 @@ type HealthCheck struct {
 	Message string
 }
 
-type getWebook struct {
+type GetWebook struct {
 	Repository string
 }
