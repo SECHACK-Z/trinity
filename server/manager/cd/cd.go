@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"main/pubsub"
+	"main/pubsub/systemevent"
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/jinzhu/gorm"
 )
@@ -90,15 +92,15 @@ func (m *CDManager) run(repository string, target *targetContext) {
 	if err := cmd.Start(); err != nil {
 		fmt.Println("Failed to exec command: ", err)
 	}
-	fmt.Println("Successfully exec start.")
+	pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.APPLICATION_START})
 	for {
 		select {
 		case <-target.ctx.Done():
-			fmt.Println("Signal recieved.")
+			pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.KILL_RECEIVED})
 			if err := cmd.Process.Kill(); err != nil {
-				fmt.Println("Failed to kill process:", err)
+				pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.KILL_FAILED})
 			} else {
-				fmt.Println("Successfully killed process.")
+				pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.KILL_SUCCESS})
 			}
 			return
 

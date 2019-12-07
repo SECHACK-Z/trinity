@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"main/manager/webhook"
 	"main/pubsub"
+	"main/pubsub/systemevent"
+	"time"
 
 	"net/http"
 	"strings"
@@ -53,8 +55,9 @@ func (r *router) deleteWebhookByID(c echo.Context) error {
 }
 
 func (r *router) receiveGitHubWebook(c echo.Context) error {
-	hook, _ := github.New()
+	pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.WEBHOOK_RECEIVED})
 
+	hook, _ := github.New()
 	payload, err := hook.Parse(c.Request(), github.PushEvent)
 	if err != nil {
 		fmt.Println(err)
@@ -67,9 +70,9 @@ func (r *router) receiveGitHubWebook(c echo.Context) error {
 		URL := release.Repository.URL
 
 		for _, target := range r.manager.Config.Get().Targets {
-			fmt.Println(target, target.Repository)
 			if target.Repository == URL && "master" == branch {
-				fmt.Printf("New commit is pushed on %s at %s\n", branch, URL)
+				message := fmt.Sprintf("New commit is pushed on %s at %s\n", branch, URL)
+				pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.REPOSITORY_UPDATED, Message: message})
 				pubsub.GetWebookEvent.Pub(pubsub.GetWebook{Repository: URL})
 				return c.NoContent(200)
 			}
