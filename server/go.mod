@@ -11,5 +11,6 @@ require (
 	github.com/rakyll/statik v0.1.6
 	github.com/ymotongpoo/goltsv v0.0.0-20130216005312-84f1da826252
 	golang.org/x/crypto v0.0.0-20191202143827-86a70503ff7e
+	gopkg.in/go-playground/webhooks.v5 v5.13.0
 	gopkg.in/yaml.v2 v2.2.7
 )

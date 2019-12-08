@@ -1,9 +1,11 @@
 package router
 
 import (
-	"github.com/labstack/echo/v4"
 	"main/manager/webhook"
+
 	"net/http"
+
+	"github.com/labstack/echo/v4"
 )
 
 func (r *router) getWebhooks(c echo.Context) error {

@@ -72,7 +72,7 @@ func getDatabase() (*gorm.DB, error) {
 
 func main() {
 	fmt.Println("poi")
-
+	os.Mkdir("repository", 0777)
 	engine, err := getDatabase()
 	if err != nil {
 		panic(err)
@@ -100,6 +100,9 @@ func main() {
 		for _, target := range conf.Targets {
 			if target.Https {
 				httpsHosts = append(httpsHosts, target.Host)
+			}
+			if target.Repository != "" {
+				pubsub.GetWebhookEvent.Pub(pubsub.GetWebhook{Repository: target.Repository})
 			}
 		}
 		pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.NEW_SETTINGS_APPLY})

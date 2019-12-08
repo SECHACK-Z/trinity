@@ -5,3 +5,5 @@ targets:
   forcehttps: false
   default: false
   healthcheck: false
+  repository: https://github.com/onsd/misc
+
