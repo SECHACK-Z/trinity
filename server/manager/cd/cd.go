@@ -2,7 +2,6 @@ package cd
 
 import (
 	"context"
-	"fmt"
 	"main/pubsub"
 	"main/pubsub/systemevent"
 	"os"
@@ -15,7 +14,7 @@ import (
 
 type CDManager struct {
 	db             *gorm.DB
-	targetContexts []targetContext
+	targetContexts map[string]targetContext
 }
 
 type targetContext struct {
@@ -27,33 +26,32 @@ type targetContext struct {
 
 func New(db *gorm.DB) *CDManager {
 	db.AutoMigrate()
-	cdManager := &CDManager{db: db}
+	cdManager := &CDManager{db: db, targetContexts: map[string]targetContext{}}
 	pubsub.GetWebhookEvent.Sub(cdManager.onGetWebhook)
 	return cdManager
 }
 
 func (m *CDManager) onGetWebhook(getWebhook pubsub.GetWebhook) {
-	repository := getWebhook.Repository
-	for index, targetContext := range m.targetContexts {
-		if targetContext.repository == repository {
-			targetContext.canselFunc()
-			// remove from slice
-			m.targetContexts = append(m.targetContexts[:index], m.targetContexts[index+1:]...)
-		}
+	repositoryName := getWebhook.Repository
+
+	target, isExist := m.targetContexts[repositoryName]
+	if isExist {
+		target.canselFunc()
+		delete(m.targetContexts, repositoryName)
 	}
+
 	path := strings.Split(getWebhook.Repository, "/")
+	ctx, cancelFunc := context.WithCancel(context.Background())
+
 	newContext := targetContext{
 		repository: getWebhook.Repository,
 		name:       path[len(path)-1],
-		ctx:        context.Background(),
-		canselFunc: func() {},
+		ctx:        ctx,
+		canselFunc: cancelFunc,
 	}
-	ctx, cancelFunc := context.WithCancel(context.Background())
-	newContext.ctx = ctx
-	newContext.canselFunc = cancelFunc
 
-	m.targetContexts = append(m.targetContexts, newContext)
-	go m.run(repository, &newContext)
+	m.targetContexts[repositoryName] = newContext
+	go m.run(repositoryName, &newContext)
 }
 
 func (m *CDManager) run(repository string, target *targetContext) {
@@ -65,15 +63,15 @@ func (m *CDManager) run(repository string, target *targetContext) {
 	if err != nil {
 		cmd := exec.Command("git", "clone", repository)
 		cmd.Dir = "./repository"
-		if out, err := cmd.Output(); err != nil {
-			fmt.Println("git clone failed", string(out))
+		if _, err := cmd.Output(); err != nil {
+			pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.ERROR, Message: "git clone failed"})
 			return
 		}
 	} else {
 		cmd := exec.Command("git", "pull")
 		cmd.Dir = directoryPath
 		if _, err := cmd.Output(); err != nil {
-			fmt.Println("git pull failed")
+			pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.ERROR, Message: "git pull failed"})
 			return
 		}
 	}
@@ -81,28 +79,25 @@ func (m *CDManager) run(repository string, target *targetContext) {
 	cmd := exec.Command("go", "build", "-o", "main")
 	cmd.Dir = directoryPath
 	if err := cmd.Run(); err != nil {
-		fmt.Println("Error at build")
+		pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.ERROR, Message: "Build failed"})
 		return
 	}
 
 	cmd = exec.Command("./main")
 	cmd.Dir = directoryPath
 	if err := cmd.Start(); err != nil {
-		fmt.Println("Failed to exec command: ", err)
+		pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.ERROR, Message: "Failed to exec command"})
+		return
 	}
 	pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.APPLICATION_START})
-	for {
-		select {
-		case <-target.ctx.Done():
-			pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.KILL_RECEIVED})
-			if err := cmd.Process.Kill(); err != nil {
-				pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.KILL_FAILED})
-			} else {
-				pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.KILL_SUCCESS})
-			}
-			return
 
-		}
+	<-target.ctx.Done()
+	pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.KILL_RECEIVED})
+	if err := cmd.Process.Kill(); err != nil {
+		pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.KILL_FAILED})
+	} else {
+		pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.KILL_SUCCESS})
 	}
+	return
 
 }
