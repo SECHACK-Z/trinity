@@ -101,8 +101,9 @@ func main() {
 			if target.Https {
 				httpsHosts = append(httpsHosts, target.Host)
 			}
-			pubsub.GetWebhookEvent.Pub(pubsub.GetWebhook{Repository: target.Repository})
-
+			if target.Repository != "" {
+				pubsub.GetWebhookEvent.Pub(pubsub.GetWebhook{Repository: target.Repository})
+			}
 		}
 		pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.NEW_SETTINGS_APPLY})
 
