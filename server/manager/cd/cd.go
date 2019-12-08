@@ -54,11 +54,9 @@ func (m *CDManager) onGetWebhook(getWebhook pubsub.GetWebhook) {
 
 	m.targetContexts = append(m.targetContexts, newContext)
 	go m.run(repository, &newContext)
-
 }
 
 func (m *CDManager) run(repository string, target *targetContext) {
-	_ = os.Mkdir("repository", 0777)
 	path := strings.Split(repository, "/")
 	repositoryName := path[len(path)-1]
 

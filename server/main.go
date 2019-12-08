@@ -72,7 +72,7 @@ func getDatabase() (*gorm.DB, error) {
 
 func main() {
 	fmt.Println("poi")
-
+	os.Mkdir("repository", 0777)
 	engine, err := getDatabase()
 	if err != nil {
 		panic(err)
