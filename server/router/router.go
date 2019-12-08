@@ -36,7 +36,7 @@ func (r *router) SetUp(e *echo.Echo) error {
 	api.PUT("/webhooks/:id", r.putWebhookByID)
 	api.DELETE("/webhooks/:id", r.deleteWebhookByID)
 
-	api.POST("/github", r.receiveGitHubWebook)
+	api.POST("/github", r.postGitHubWebhook)
 	return nil
 }
 
