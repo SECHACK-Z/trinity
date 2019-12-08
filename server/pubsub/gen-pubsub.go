@@ -109,17 +109,17 @@ func (ps *__HealthCheckPubSub) Pub(event HealthCheck) {
 }
 
 // TODO: Close処理
-type __GetWebookPubSub struct {
-	subs map[string]func(GetWebook)
-	c    chan GetWebook
+type __GetWebhookPubSub struct {
+	subs map[string]func(GetWebhook)
+	c    chan GetWebhook
 }
 
-var GetWebookEvent = &__GetWebookPubSub{
-	subs: make(map[string]func(GetWebook)),
-	c:    make(chan GetWebook, 10),
+var GetWebhookEvent = &__GetWebhookPubSub{
+	subs: make(map[string]func(GetWebhook)),
+	c:    make(chan GetWebhook, 10),
 }
 
-func (ps *__GetWebookPubSub) Sub(f func(et GetWebook)) string {
+func (ps *__GetWebhookPubSub) Sub(f func(et GetWebhook)) string {
 	subID := randomStr(5)
 	for _, ok := ps.subs[subID]; ok; _, ok = ps.subs[subID] {
 		subID = randomStr(5)
@@ -128,7 +128,7 @@ func (ps *__GetWebookPubSub) Sub(f func(et GetWebook)) string {
 	return subID
 }
 
-func (ps *__GetWebookPubSub) Pub(event GetWebook) {
+func (ps *__GetWebhookPubSub) Pub(event GetWebhook) {
 	for _, f := range ps.subs {
 		go f(event)
 	}

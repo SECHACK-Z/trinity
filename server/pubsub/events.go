@@ -29,6 +29,6 @@ type HealthCheck struct {
 	Message string
 }
 
-type GetWebook struct {
+type GetWebhook struct {
 	Repository string
 }

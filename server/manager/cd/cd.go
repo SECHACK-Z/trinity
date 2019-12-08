@@ -28,11 +28,11 @@ type targetContext struct {
 func New(db *gorm.DB) *CDManager {
 	db.AutoMigrate()
 	cdManager := &CDManager{db: db}
-	pubsub.GetWebookEvent.Sub(cdManager.onGetWebhook)
+	pubsub.GetWebhookEvent.Sub(cdManager.onGetWebhook)
 	return cdManager
 }
 
-func (m *CDManager) onGetWebhook(getWebhook pubsub.GetWebook) {
+func (m *CDManager) onGetWebhook(getWebhook pubsub.GetWebhook) {
 	repository := getWebhook.Repository
 	for index, targetContext := range m.targetContexts {
 		if targetContext.repository == repository {
