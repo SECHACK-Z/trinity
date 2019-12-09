@@ -27,6 +27,9 @@ func New(db *gorm.DB) *HealthCheckManager {
 func (m *HealthCheckManager) onUpdateConfig(updateConfig pubsub.UpdateConfig) {
 	config := updateConfig.Config
 	m.cancelFunc()
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	m.ctx = ctx
+	m.cancelFunc = cancelFunc
 	for _, target := range config.Targets {
 		if target.HealthCheck {
 			m.AddHealthCheck("http://" + target.Proxy)
