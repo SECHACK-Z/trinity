@@ -43,9 +43,6 @@ func (m *HealthCheckManager) AddHealthCheck(target string) {
 		Type:    systemevent.HEALTH_CHECK_REGISTER,
 		Message: target,
 	})
-	ctx, cancelFunc := context.WithCancel(context.Background())
-	m.ctx = ctx
-	m.cancelFunc = cancelFunc
 	go m.run(target,m.ctx)
 }
 
