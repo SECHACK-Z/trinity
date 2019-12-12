@@ -3,10 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/jinzhu/gorm"
 	"log"
 	"main/config"
-	"main/logger"
 	"main/manager"
 	"main/pubsub"
 	"main/pubsub/systemevent"
@@ -18,16 +16,15 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jinzhu/gorm"
+
 	"golang.org/x/crypto/acme/autocert"
 
-	_ "github.com/mattn/go-sqlite3"
 	_ "main/statik"
 
-	"github.com/labstack/echo/v4"
-)
+	_ "github.com/mattn/go-sqlite3"
 
-var (
-	Logs []logger.LogType
+	"github.com/labstack/echo/v4"
 )
 
 // NewMultipleHostReverseProxy creates a reverse proxy that will randomly
@@ -72,7 +69,7 @@ func getDatabase() (*gorm.DB, error) {
 
 func main() {
 	fmt.Println("poi")
-
+	os.Mkdir("repository", 0777)
 	engine, err := getDatabase()
 	if err != nil {
 		panic(err)
@@ -100,6 +97,9 @@ func main() {
 		for _, target := range conf.Targets {
 			if target.Https {
 				httpsHosts = append(httpsHosts, target.Host)
+			}
+			if target.Repository != "" {
+				pubsub.GetWebhookEvent.Pub(pubsub.GetWebhook{Repository: target.Repository})
 			}
 		}
 		pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.NEW_SETTINGS_APPLY})

@@ -18,3 +18,8 @@ main
 app
 logFile
 systemLog
+
+config.yaml
+statik/
+
+repository/

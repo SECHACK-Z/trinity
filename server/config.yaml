@@ -4,4 +4,6 @@ targets:
   https: false
   forcehttps: false
   default: false
-  healthcheck: true
+  healthcheck: false
+  repository: https://github.com/onsd/misc
+

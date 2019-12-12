@@ -11,4 +11,5 @@ type Target struct {
 	ForceHttps  bool   `json:"forceHttps"`
 	Default     bool   `json:"default"`
 	HealthCheck bool   `json:healthCheck`
+	Repository  string `json:"repository"`
 }

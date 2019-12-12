@@ -55,7 +55,8 @@ export default {
     }
   },
   mounted() {
-    axios.get('/api/rawLog').then(response => {
+    axios.get('/api/logs').then(response => {
+      console.log(response)
       const data = response.data
       const aggregateData = data.reduce(function(result, current) {
         const element = result.find(function(p) {
@@ -86,12 +87,8 @@ export default {
       })
 
       this.chartData = group
-    }).then(() => {
-      axios.get('/api/accessLog').then(response => {
-        console.log('accessLog', response)
-        this.accessData = response.data
-        this.isFetched = true
-      })
+      this.accessData = data
+      this.isFetched = true
     })
   }
 }
