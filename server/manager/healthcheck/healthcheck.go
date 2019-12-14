@@ -3,6 +3,7 @@ package healthcheck
 import (
 	"github.com/jinzhu/gorm"
 	"io/ioutil"
+	"main/config"
 	"main/pubsub"
 	"main/pubsub/systemevent"
 	"net/http"
@@ -24,28 +25,28 @@ func (m *HealthCheckManager) onUpdateConfig(updateConfig pubsub.UpdateConfig) {
 	config := updateConfig.Config
 	for _, target := range config.Targets {
 		if target.HealthCheck {
-			m.AddHealthCheck("http://" + target.Proxy)
+			m.AddHealthCheck(target)
 		}
 	}
 
 }
 
-func (m *HealthCheckManager) AddHealthCheck(target string) {
+func (m *HealthCheckManager) AddHealthCheck(target config.Target) {
 	pubsub.SystemEvent.Pub(pubsub.System{
 		Time:    time.Now(),
 		Type:    systemevent.HEALTH_CHECK_REGISTER,
-		Message: target,
+		Message: target.Proxy,
 	})
 	go m.run(target)
 }
 
-func (m *HealthCheckManager) run(target string) {
+func (m *HealthCheckManager) run(target config.Target) {
 	// TODO: contextを使ってリセットを実装する
 	ticker := time.Tick(10 * time.Second)
 	for {
 		select {
 		case <-ticker:
-			req, err := http.NewRequest("GET", target, nil)
+			req, err := http.NewRequest("GET", "http://"+target.Proxy, nil)
 			if err != nil {
 				// TODO
 				continue
