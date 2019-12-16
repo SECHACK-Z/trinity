@@ -14,6 +14,7 @@ const (
 	KILL_RECEIVED         SystemEventType = "received kill signal"
 	KILL_SUCCESS          SystemEventType = "successfully killed application"
 	KILL_FAILED           SystemEventType = "failed to kill application"
+	BUILD_FAILED          SystemEventType = "build failed"
 	WEBHOOK_RECEIVED      SystemEventType = "webhook from github received"
 	REPOSITORY_UPDATED    SystemEventType = "respository is updated"
 	ERROR                 SystemEventType = "error"
