@@ -1,6 +1,7 @@
 package healthcheck
 
 import (
+	"context"
 	"github.com/jinzhu/gorm"
 	"io/ioutil"
 	"main/config"
@@ -12,23 +13,29 @@ import (
 
 type HealthCheckManager struct {
 	db *gorm.DB
+	ctx context.Context
+	cancelFunc context.CancelFunc
 }
 
 func New(db *gorm.DB) *HealthCheckManager {
 	db.AutoMigrate()
-	healthCheckManager := &HealthCheckManager{db: db}
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	healthCheckManager := &HealthCheckManager{db: db, ctx: ctx, cancelFunc: cancelFunc }
 	pubsub.UpdateConfigEvent.Sub(healthCheckManager.onUpdateConfig)
 	return healthCheckManager
 }
 
 func (m *HealthCheckManager) onUpdateConfig(updateConfig pubsub.UpdateConfig) {
 	config := updateConfig.Config
+	m.cancelFunc()
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	m.ctx = ctx
+	m.cancelFunc = cancelFunc
 	for _, target := range config.Targets {
 		if target.HealthCheck {
 			m.AddHealthCheck(target)
 		}
 	}
-
 }
 
 func (m *HealthCheckManager) AddHealthCheck(target config.Target) {
@@ -37,11 +44,10 @@ func (m *HealthCheckManager) AddHealthCheck(target config.Target) {
 		Type:    systemevent.HEALTH_CHECK_REGISTER,
 		Message: target.Proxy,
 	})
-	go m.run(target)
+	go m.run(target,m.ctx)
 }
 
-func (m *HealthCheckManager) run(target config.Target) {
-	// TODO: contextを使ってリセットを実装する
+func (m *HealthCheckManager) run(target string, ctx context.Context) {
 	ticker := time.Tick(10 * time.Second)
 	for {
 		select {
@@ -74,6 +80,8 @@ func (m *HealthCheckManager) run(target config.Target) {
 				Status:  res.StatusCode,
 				Message: string(body),
 			})
+		case <-ctx.Done():
+			break
 		}
 	}
 }
