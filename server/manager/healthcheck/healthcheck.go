@@ -12,15 +12,15 @@ import (
 )
 
 type HealthCheckManager struct {
-	db *gorm.DB
-	ctx context.Context
+	db         *gorm.DB
+	ctx        context.Context
 	cancelFunc context.CancelFunc
 }
 
 func New(db *gorm.DB) *HealthCheckManager {
 	db.AutoMigrate()
 	ctx, cancelFunc := context.WithCancel(context.Background())
-	healthCheckManager := &HealthCheckManager{db: db, ctx: ctx, cancelFunc: cancelFunc }
+	healthCheckManager := &HealthCheckManager{db: db, ctx: ctx, cancelFunc: cancelFunc}
 	pubsub.UpdateConfigEvent.Sub(healthCheckManager.onUpdateConfig)
 	return healthCheckManager
 }
@@ -44,10 +44,10 @@ func (m *HealthCheckManager) AddHealthCheck(target config.Target) {
 		Type:    systemevent.HEALTH_CHECK_REGISTER,
 		Message: target.Proxy,
 	})
-	go m.run(target,m.ctx)
+	go m.run(target, m.ctx)
 }
 
-func (m *HealthCheckManager) run(target string, ctx context.Context) {
+func (m *HealthCheckManager) run(target config.Target, ctx context.Context) {
 	ticker := time.Tick(10 * time.Second)
 	for {
 		select {
