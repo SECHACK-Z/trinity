@@ -4,7 +4,6 @@
 
 package pubsub
 
-// TODO: Close処理
 type __AccessPubSub struct {
 	subs map[string]func(Access)
 	c    chan Access
@@ -24,13 +23,20 @@ func (ps *__AccessPubSub) Sub(f func(et Access)) string {
 	return subID
 }
 
+func (ps *__AccessPubSub) Unsub(subscribeID string) bool {
+	if _, ok := ps.subs[subscribeID]; ok {
+		delete(ps.subs, subscribeID)
+		return true
+	}
+	return false
+}
+
 func (ps *__AccessPubSub) Pub(event Access) {
 	for _, f := range ps.subs {
 		go f(event)
 	}
 }
 
-// TODO: Close処理
 type __SystemPubSub struct {
 	subs map[string]func(System)
 	c    chan System
@@ -50,13 +56,20 @@ func (ps *__SystemPubSub) Sub(f func(et System)) string {
 	return subID
 }
 
+func (ps *__SystemPubSub) Unsub(subscribeID string) bool {
+	if _, ok := ps.subs[subscribeID]; ok {
+		delete(ps.subs, subscribeID)
+		return true
+	}
+	return false
+}
+
 func (ps *__SystemPubSub) Pub(event System) {
 	for _, f := range ps.subs {
 		go f(event)
 	}
 }
 
-// TODO: Close処理
 type __UpdateConfigPubSub struct {
 	subs map[string]func(UpdateConfig)
 	c    chan UpdateConfig
@@ -76,13 +89,20 @@ func (ps *__UpdateConfigPubSub) Sub(f func(et UpdateConfig)) string {
 	return subID
 }
 
+func (ps *__UpdateConfigPubSub) Unsub(subscribeID string) bool {
+	if _, ok := ps.subs[subscribeID]; ok {
+		delete(ps.subs, subscribeID)
+		return true
+	}
+	return false
+}
+
 func (ps *__UpdateConfigPubSub) Pub(event UpdateConfig) {
 	for _, f := range ps.subs {
 		go f(event)
 	}
 }
 
-// TODO: Close処理
 type __HealthCheckPubSub struct {
 	subs map[string]func(HealthCheck)
 	c    chan HealthCheck
@@ -102,13 +122,20 @@ func (ps *__HealthCheckPubSub) Sub(f func(et HealthCheck)) string {
 	return subID
 }
 
+func (ps *__HealthCheckPubSub) Unsub(subscribeID string) bool {
+	if _, ok := ps.subs[subscribeID]; ok {
+		delete(ps.subs, subscribeID)
+		return true
+	}
+	return false
+}
+
 func (ps *__HealthCheckPubSub) Pub(event HealthCheck) {
 	for _, f := range ps.subs {
 		go f(event)
 	}
 }
 
-// TODO: Close処理
 type __GetWebhookPubSub struct {
 	subs map[string]func(GetWebhook)
 	c    chan GetWebhook
@@ -126,6 +153,14 @@ func (ps *__GetWebhookPubSub) Sub(f func(et GetWebhook)) string {
 	}
 	ps.subs[subID] = f
 	return subID
+}
+
+func (ps *__GetWebhookPubSub) Unsub(subscribeID string) bool {
+	if _, ok := ps.subs[subscribeID]; ok {
+		delete(ps.subs, subscribeID)
+		return true
+	}
+	return false
 }
 
 func (ps *__GetWebhookPubSub) Pub(event GetWebhook) {
