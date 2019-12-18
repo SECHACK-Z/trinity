@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/jinzhu/gorm"
 	"io/ioutil"
+	"main/config"
 	"main/pubsub"
 	"main/pubsub/systemevent"
 	"net/http"
@@ -32,16 +33,16 @@ func (m *HealthCheckManager) onUpdateConfig(updateConfig pubsub.UpdateConfig) {
 	m.cancelFunc = cancelFunc
 	for _, target := range config.Targets {
 		if target.HealthCheck {
-			m.AddHealthCheck("http://" + target.Proxy)
+			m.AddHealthCheck(target)
 		}
 	}
 }
 
-func (m *HealthCheckManager) AddHealthCheck(target string) {
+func (m *HealthCheckManager) AddHealthCheck(target config.Target) {
 	pubsub.SystemEvent.Pub(pubsub.System{
 		Time:    time.Now(),
 		Type:    systemevent.HEALTH_CHECK_REGISTER,
-		Message: target,
+		Message: target.Proxy,
 	})
 	go m.run(target,m.ctx)
 }
@@ -51,7 +52,7 @@ func (m *HealthCheckManager) run(target string, ctx context.Context) {
 	for {
 		select {
 		case <-ticker:
-			req, err := http.NewRequest("GET", target, nil)
+			req, err := http.NewRequest("GET", "http://"+target.Proxy, nil)
 			if err != nil {
 				// TODO
 				continue

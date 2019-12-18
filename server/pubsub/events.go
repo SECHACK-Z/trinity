@@ -24,7 +24,7 @@ type UpdateConfig struct {
 }
 
 type HealthCheck struct {
-	Target  string
+	Target  config.Target
 	Status  int
 	Message string
 }

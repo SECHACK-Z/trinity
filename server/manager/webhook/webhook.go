@@ -45,7 +45,7 @@ func (m *WebhookManager) onUpdateConfig(event pubsub.UpdateConfig) {
 }
 
 func (m *WebhookManager) onHealthCheck(event pubsub.HealthCheck) {
-	pre, ok := m.statusMap[event.Target]
+	pre, ok := m.statusMap[event.Target.Proxy]
 	if !ok {
 		pre = 200
 	}
@@ -58,7 +58,9 @@ func (m *WebhookManager) onHealthCheck(event pubsub.HealthCheck) {
 				Message: err.Error(),
 			})
 		}
-		message := event.Target + " のヘルスチェックに失敗しました"
+		message := event.Target.Proxy + " のヘルスチェックに失敗しました"
+		pubsub.GetWebhookEvent.Pub(pubsub.GetWebhook{Repository: event.Target.Repository})
+
 		for _, webhook := range webhooks {
 			go callWebhook(webhook, message)
 		}
@@ -73,13 +75,13 @@ func (m *WebhookManager) onHealthCheck(event pubsub.HealthCheck) {
 				Message: err.Error(),
 			})
 		}
-		message := event.Target + " が回復しました"
+		message := event.Target.Proxy + " が回復しました"
 		for _, webhook := range webhooks {
 			go callWebhook(webhook, message)
 		}
 	}
 
-	m.statusMap[event.Target] = event.Status
+	m.statusMap[event.Target.Proxy] = event.Status
 }
 
 func callWebhook(webhook *Webhook, message string) (*http.Response, error) {
