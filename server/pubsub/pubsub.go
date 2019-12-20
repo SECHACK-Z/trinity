@@ -6,7 +6,6 @@ import (
 
 type EventType generic.Type
 
-// TODO: Close処理
 type __EventTypePubSub struct {
 	subs map[string]func(EventType)
 	c    chan EventType
@@ -26,8 +25,18 @@ func (ps *__EventTypePubSub) Sub(f func(et EventType)) string {
 	return subID
 }
 
+func (ps *__EventTypePubSub) Unsub(subscribeID string) bool {
+	if _, ok := ps.subs[subscribeID]; ok {
+		delete(ps.subs, subscribeID)
+		return true
+	}
+	return false
+}
+
 func (ps *__EventTypePubSub) Pub(event EventType) {
 	for _, f := range ps.subs {
 		go f(event)
 	}
 }
+
+

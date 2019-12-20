@@ -72,8 +72,9 @@ func (m *HealthCheckManager) run(target config.Target, ctx context.Context) {
 				pubsub.HealthCheckEvent.Pub(pubsub.HealthCheck{
 					Target:  target,
 					Status:  res.StatusCode,
-					Message: "",
+					Message: err.Error(),
 				})
+				continue
 			}
 			pubsub.HealthCheckEvent.Pub(pubsub.HealthCheck{
 				Target:  target,
