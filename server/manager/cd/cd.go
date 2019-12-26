@@ -78,8 +78,9 @@ func (m *CDManager) run(repository string, target *targetContext) {
 
 	cmd := exec.Command("go", "build", "-o", "main")
 	cmd.Dir = directoryPath
-	if err := cmd.Run(); err != nil {
-		pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.ERROR, Message: "Build failed"})
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.BUILD_FAILED, Message: string(out)})
 		return
 	}
 

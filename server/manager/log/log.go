@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"main/pubsub"
+	"main/pubsub/systemevent"
 	"net/http/httputil"
 	"os"
 	"time"
@@ -59,4 +60,13 @@ func (m *LogManager) AccessLogger(event pubsub.Access) {
 
 func (m *LogManager) SystemLogger(event pubsub.System) {
 	log.Println(event.Type)
+	if event.Type == systemevent.BUILD_FAILED {
+		file, err := os.OpenFile(`./buildLog`, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer file.Close()
+
+		file.WriteString(event.Message)
+	}
 }
