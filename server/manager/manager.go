@@ -2,6 +2,7 @@ package manager
 
 import (
 	"github.com/jinzhu/gorm"
+	"main/manager/admin"
 	"main/manager/cd"
 	"main/manager/config"
 	"main/manager/healthcheck"
@@ -15,6 +16,7 @@ type Manager struct {
 	HealthCheck        *healthcheck.HealthCheckManager
 	ContinuousDelivery *cd.CDManager
 	Log                *log.LogManager
+	Admin              *admin.AdminManager
 }
 
 func New(db *gorm.DB) *Manager {
@@ -24,5 +26,6 @@ func New(db *gorm.DB) *Manager {
 		HealthCheck:        healthcheck.New(db),
 		ContinuousDelivery: cd.New(db),
 		Log:                log.New(db),
+		Admin:              admin.New(db),
 	}
 }
