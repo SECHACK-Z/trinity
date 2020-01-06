@@ -1,10 +1,9 @@
 package router
 
 import (
-	"fmt"
-	"github.com/labstack/echo/v4"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
+	"github.com/labstack/echo/v4"
 	"net/http"
 )
 
@@ -17,7 +16,6 @@ func (r *router) postLogin(c echo.Context) error {
 	if err := c.Bind(reqBody); err != nil {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
-	fmt.Println(reqBody)
 
 	adminUser, err := r.manager.Admin.Authorize(reqBody.UserName, reqBody.Password)
 	if err != nil {
