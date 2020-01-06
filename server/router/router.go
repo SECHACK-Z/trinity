@@ -1,11 +1,20 @@
 package router
 
 import (
+	"context"
+	"github.com/gorilla/sessions"
+	"github.com/labstack/echo-contrib/session"
 	"main/manager"
 	"net/http"
+	"os"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/rakyll/statik/fs"
+)
+
+var (
+	cookieSecret = os.Getenv("COOKIE_SECRET")
 )
 
 type router struct {
@@ -19,9 +28,18 @@ func New(manager *manager.Manager) *router {
 }
 
 func (r *router) SetUp(e *echo.Echo) error {
+	e.Use(session.Middleware(sessions.NewCookieStore([]byte(cookieSecret))))
 	e.GET("/*", r.getStaticHandler())
 
+	e.POST("/api/login", r.postLogin)
+
 	api := e.Group("/api")
+	if cookieSecret == "" {
+		cookieSecret = "secret"
+	}
+	api.Use(r.checkLogin)
+
+	api.POST("/logout", r.postLogout)
 
 	api.GET("/404", r.defaultBackend)
 	api.GET("/ping", r.ping)
@@ -37,6 +55,31 @@ func (r *router) SetUp(e *echo.Echo) error {
 	api.DELETE("/webhooks/:id", r.deleteWebhookByID)
 
 	api.POST("/github", r.postGitHubWebhook)
+	return nil
+}
+
+func (r *router) SetUpForInitilize(e *echo.Echo) error {
+	e.GET("/*", r.getStaticHandler())
+	api := e.Group("/api")
+	api.POST("/init", func(c echo.Context)error {
+		reqBody := &struct{
+			UserName string `json:"username"`
+			Password string `json:"password"`
+		}{}
+
+		c.Bind(reqBody)
+
+		if err := r.manager.Admin.CreateAdmin(reqBody.UserName, reqBody.Password); err != nil {
+			return err
+		}
+
+		go func() {
+			<-c.Request().Context().Done()
+			time.Sleep(500 * time.Millisecond)
+			e.Shutdown(context.Background())
+		}()
+		return c.NoContent(http.StatusNoContent)
+	})
 	return nil
 }
 

@@ -134,6 +134,19 @@ func main() {
 		}
 	})
 
+	if !manager.Admin.IsAdminExists() {
+		r := router.New(manager)
+		// Web UI
+		e := echo.New()
+		e.HideBanner = true
+
+		r.SetUpForInitilize(e)
+
+		if err := e.Start(":8080"); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+		}
+	}
+
 	if err := manager.Config.SetUpFromFile(); err != nil {
 		panic(err)
 	}
@@ -150,3 +163,4 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 	}
 }
+

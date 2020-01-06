@@ -3,7 +3,7 @@
     <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form" autocomplete="on" label-position="left">
 
       <div class="title-container">
-        <h3 class="title">Login Form</h3>
+        <h3 class="title">Initialize</h3>
       </div>
 
       <el-form-item prop="username">
@@ -21,37 +21,55 @@
         />
       </el-form-item>
 
-      <el-tooltip v-model="capsTooltip" content="Caps lock is On" placement="right" manual>
-        <el-form-item prop="password">
-          <span class="svg-container">
-            <svg-icon icon-class="password" />
-          </span>
-          <el-input
-            :key="passwordType"
-            ref="password"
-            v-model="loginForm.password"
-            :type="passwordType"
-            placeholder="Password"
-            name="password"
-            tabindex="2"
-            autocomplete="on"
-            @keyup.native="checkCapslock"
-            @blur="capsTooltip = false"
-            @keyup.enter.native="handleLogin"
-          />
-          <span class="show-pwd" @click="showPwd">
-            <svg-icon :icon-class="passwordType === 'password' ? 'eye' : 'eye-open'" />
-          </span>
-        </el-form-item>
-      </el-tooltip>
+      <el-form-item prop="password">
+        <span class="svg-container">
+          <svg-icon icon-class="password" />
+        </span>
+        <el-input
+          :key="passwordType"
+          ref="password"
+          v-model="loginForm.password"
+          :type="passwordType"
+          placeholder="Password"
+          name="password"
+          tabindex="2"
+          autocomplete="on"
+          @blur="capsTooltip = false"
+        />
+        <span class="show-pwd" @click="showPwd">
+          <svg-icon :icon-class="passwordType === 'password' ? 'eye' : 'eye-open'" />
+        </span>
+      </el-form-item>
 
-      <el-button :loading="loading" type="primary" style="width:100%;margin-bottom:30px;" @click.native.prevent="handleLogin">Login</el-button>
+      <el-form-item prop="repassword">
+        <span class="svg-container">
+          <svg-icon icon-class="password" />
+        </span>
+        <el-input
+          :key="'re' + passwordType"
+          ref="repassword"
+          v-model="loginForm.repassword"
+          :type="passwordType"
+          placeholder="Retype Password"
+          name="repassword"
+          tabindex="3"
+          autocomplete="on"
+          @blur="capsTooltip2 = false"
+          @keyup.enter.native="handleInitialize"
+        />
+        <span class="show-pwd" @click="showPwd">
+          <svg-icon :icon-class="passwordType === 'password' ? 'eye' : 'eye-open'" />
+        </span>
+      </el-form-item>
+
+      <el-button :loading="loading" type="primary" style="width:100%;margin-bottom:30px;" @click.prevent="handleInitialize">Initialize</el-button>
     </el-form>
   </div>
 </template>
 
 <script>
 import { validUsername } from '@/utils/validate'
+import { initialize } from '../../api/auth'
 
 export default {
   name: 'Login',
@@ -66,7 +84,14 @@ export default {
     }
     const validatePassword = (rule, value, callback) => {
       if (value.length < 2) {
-        callback(new Error('The password can not be less than 6 digits'))
+        callback(new Error('The password can not be less than 2 digits'))
+      } else {
+        callback()
+      }
+    }
+    const validateRepassword = (rule, value, callback) => {
+      if (value !== this.loginForm.password) {
+        callback(new Error('The password not match re-typed password'))
       } else {
         callback()
       }
@@ -74,14 +99,15 @@ export default {
     return {
       loginForm: {
         username: '',
-        password: ''
+        password: '',
+        repassword: ''
       },
       loginRules: {
         username: [{ required: true, trigger: 'blur', validator: validateUsername }],
-        password: [{ required: true, trigger: 'blur', validator: validatePassword }]
+        password: [{ required: true, trigger: 'blur', validator: validatePassword }],
+        repassword: [{ required: true, trigger: 'change', validator: validateRepassword }]
       },
       passwordType: 'password',
-      capsTooltip: false,
       loading: false,
       showDialog: false,
       redirect: undefined,
@@ -114,18 +140,6 @@ export default {
     // window.removeEventListener('storage', this.afterQRScan)
   },
   methods: {
-    checkCapslock({ shiftKey, key } = {}) {
-      if (key && key.length === 1) {
-        if (shiftKey && (key >= 'a' && key <= 'z') || !shiftKey && (key >= 'A' && key <= 'Z')) {
-          this.capsTooltip = true
-        } else {
-          this.capsTooltip = false
-        }
-      }
-      if (key === 'CapsLock' && this.capsTooltip === true) {
-        this.capsTooltip = false
-      }
-    },
     showPwd() {
       if (this.passwordType === 'password') {
         this.passwordType = ''
@@ -136,16 +150,14 @@ export default {
         this.$refs.password.focus()
       })
     },
-    handleLogin() {
+    handleInitialize() {
       this.$refs.loginForm.validate(valid => {
         if (valid) {
           this.loading = true
-          this.$store.dispatch('user/login', this.loginForm)
+          const { username, password } = this.loginForm
+          initialize(username, password)
             .then(() => {
-              this.$router.push({ path: this.redirect || '/', query: this.otherQuery })
-              this.loading = false
-            })
-            .catch(() => {
+              this.$router.push({ path: this.redirect || '/login', query: this.otherQuery })
               this.loading = false
             })
         } else {

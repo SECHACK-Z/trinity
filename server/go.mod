@@ -4,8 +4,10 @@ go 1.13
 
 require (
 	github.com/cheekybits/genny v1.0.0
+	github.com/gorilla/sessions v1.2.0
 	github.com/jinzhu/gorm v1.9.11
 	github.com/kr/pretty v0.1.0 // indirect
+	github.com/labstack/echo-contrib v0.8.0
 	github.com/labstack/echo/v4 v4.1.11
 	github.com/mattn/go-sqlite3 v2.0.1+incompatible
 	github.com/rakyll/statik v0.1.6
