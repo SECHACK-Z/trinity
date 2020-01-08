@@ -34,7 +34,7 @@ func New(db *gorm.DB) *LogManager {
 
 	pubsub.AccessEvent.Sub(logManager.AccessLogger)
 	pubsub.SystemEvent.Sub(logManager.SystemLogger)
-
+	pubsub.NewsEvent.Sub(logManager.NewsLogger)
 	return logManager
 }
 
@@ -69,4 +69,16 @@ func (m *LogManager) SystemLogger(event pubsub.System) {
 
 		file.WriteString(event.Message)
 	}
+}
+
+func (m *LogManager) NewsLogger(event pubsub.News) {
+	file, err := os.OpenFile(`./News`, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	format := "Type:%v\tproxy:%v\thost:%v\n"
+	logData := fmt.Sprintf(format, event.Type, event.Target.Proxy, event.Target.Host)
+	file.WriteString(logData)
+
 }

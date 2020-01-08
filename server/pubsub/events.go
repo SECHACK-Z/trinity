@@ -3,6 +3,7 @@ package pubsub
 import (
 	"main/config"
 	"main/pubsub/systemevent"
+
 	"net/http"
 	"time"
 )
@@ -31,4 +32,9 @@ type HealthCheck struct {
 
 type GetWebhook struct {
 	Repository string
+}
+
+type News struct {
+	Type   string
+	Target config.Target
 }

@@ -2,13 +2,14 @@ package healthcheck
 
 import (
 	"context"
-	"github.com/jinzhu/gorm"
 	"io/ioutil"
 	"main/config"
 	"main/pubsub"
 	"main/pubsub/systemevent"
 	"net/http"
 	"time"
+
+	"github.com/jinzhu/gorm"
 )
 
 type HealthCheckManager struct {
@@ -44,6 +45,7 @@ func (m *HealthCheckManager) AddHealthCheck(target config.Target) {
 		Type:    systemevent.HEALTH_CHECK_REGISTER,
 		Message: target.Proxy,
 	})
+
 	go m.run(target, m.ctx)
 }
 
@@ -81,6 +83,17 @@ func (m *HealthCheckManager) run(target config.Target, ctx context.Context) {
 				Status:  res.StatusCode,
 				Message: string(body),
 			})
+
+			// check favicon
+			res, err = http.Get("http://" + target.Proxy + "/favicon.ico")
+			if err == nil {
+				if res.Header.Get("Content-type") != "image/x-icon" {
+					pubsub.NewsEvent.Pub(pubsub.News{
+						Type:   "favicon is missing",
+						Target: target,
+					})
+				}
+			}
 		case <-ctx.Done():
 			break
 		}
