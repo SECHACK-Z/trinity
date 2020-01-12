@@ -155,6 +155,12 @@ export const constantRoutes = [
         component: () => import('@/views/documentation/index'),
         name: 'nest',
         meta: { title: 'Documentation', icon: 'documentation', affix: true, path: 'index' }
+      },
+      {
+        path: 'gettingStarted',
+        component: () => import('@/views/documentation/index'),
+        name: 'Getting started',
+        meta: { title: 'Getting Started', icon: 'documentation', affix: true, path: 'gettingStarted' }
       }
     ]
   },
