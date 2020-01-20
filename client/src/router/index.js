@@ -161,6 +161,18 @@ export const constantRoutes = [
         component: () => import('@/views/documentation/index'),
         name: 'Getting started',
         meta: { title: 'Getting Started', icon: 'documentation', affix: true, path: 'gettingStarted' }
+      },
+      {
+        path: 'healthCheck',
+        component: () => import('@/views/documentation/index'),
+        name: 'Health Check',
+        meta: { title: 'Health Check', icon: 'documentation', affix: true, path: 'healthCheck' }
+      },
+      {
+        path: 'continuousDelivery',
+        component: () => import('@/views/documentation/index'),
+        name: 'Continuous Delivery',
+        meta: { title: 'Continuous Delivery', icon: 'documentation', affix: true, path: 'continuousDelivery' }
       }
     ]
   },
