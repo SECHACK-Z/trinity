@@ -68,36 +68,63 @@ func (m *CDManager) run(repository string, target *targetContext) {
 			return
 		}
 	} else {
-		cmd := exec.Command("git", "pull")
-		cmd.Dir = directoryPath
-		if _, err := cmd.Output(); err != nil {
+		fetch := exec.Command("git", "fetch")
+		fetch.Dir = directoryPath
+		if _, err := fetch.Output(); err != nil {
+			pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.ERROR, Message: "git pull failed"})
+			return
+		}
+
+		reset := exec.Command("git", "reset", "--hard", "origin/master")
+		reset.Dir = directoryPath
+		if _, err := reset.Output(); err != nil {
 			pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.ERROR, Message: "git pull failed"})
 			return
 		}
 	}
 
-	cmd := exec.Command("go", "build", "-o", "main")
-	cmd.Dir = directoryPath
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.BUILD_FAILED, Message: string(out)})
-		return
-	}
+	// docker-compose.yamlがあるときはそれを起動する
+	if _, err := os.Stat(directoryPath + "/" + "docker-compose.yaml"); err == nil {
+		cmd := exec.Command("docker-compose", "up", "--build")
+		cmd.Dir = directoryPath
 
-	cmd = exec.Command("./main")
-	cmd.Dir = directoryPath
-	if err := cmd.Start(); err != nil {
-		pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.ERROR, Message: "Failed to exec command"})
-		return
-	}
-	pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.APPLICATION_START})
+		pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.APPLICATION_START})
+		if err := cmd.Start(); err != nil {
+			pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.ERROR, Message: "Failed to exec command"})
+			return
+		}
 
-	<-target.ctx.Done()
-	pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.KILL_RECEIVED})
-	if err := cmd.Process.Kill(); err != nil {
-		pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.KILL_FAILED})
+		<-target.ctx.Done()
+		pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.KILL_RECEIVED})
+		if err := cmd.Process.Kill(); err != nil {
+			pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.KILL_FAILED})
+		} else {
+			pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.KILL_SUCCESS})
+		}
 	} else {
-		pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.KILL_SUCCESS})
+		cmd := exec.Command("go", "build", "-o", "main")
+		cmd.Dir = directoryPath
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.BUILD_FAILED, Message: string(out)})
+			return
+		}
+
+		cmd = exec.Command("./main")
+		cmd.Dir = directoryPath
+		if err := cmd.Start(); err != nil {
+			pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.ERROR, Message: "Failed to exec command"})
+			return
+		}
+		pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.APPLICATION_START})
+
+		<-target.ctx.Done()
+		pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.KILL_RECEIVED})
+		if err := cmd.Process.Kill(); err != nil {
+			pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.KILL_FAILED})
+		} else {
+			pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.KILL_SUCCESS})
+		}
 	}
 	return
 
