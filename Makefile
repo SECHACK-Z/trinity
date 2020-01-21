@@ -5,6 +5,7 @@ build: build-client statik build-server
 .PHONY: build-client
 build-client:
 	cd client &&\
+	yarn &&\
 	yarn build:stage
 
 .PHONY: build-server
