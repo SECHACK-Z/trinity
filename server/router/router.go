@@ -32,6 +32,7 @@ func (r *router) SetUp(e *echo.Echo) error {
 	e.GET("/*", r.getStaticHandler())
 
 	e.POST("/api/login", r.postLogin)
+	e.POST("/api/github", r.postGitHubWebhook)
 
 	api := e.Group("/api")
 	if cookieSecret == "" {
@@ -54,7 +55,6 @@ func (r *router) SetUp(e *echo.Echo) error {
 	api.PUT("/webhooks/:id", r.putWebhookByID)
 	api.DELETE("/webhooks/:id", r.deleteWebhookByID)
 
-	api.POST("/github", r.postGitHubWebhook)
 	return nil
 }
 
