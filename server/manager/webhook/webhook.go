@@ -17,6 +17,12 @@ type WebhookManager struct {
 	statusMap map[string]int
 }
 
+const (
+	HEALTH_CHECK string = "HEALTH_CHECK"
+	NEW_CONFIG string = "NEW_CONFIG"
+	DEPLOY string = "DEPLOY"
+)
+
 func New(db *gorm.DB) *WebhookManager {
 	db.AutoMigrate(&Webhook{}, &WebhookEvent{}, &WebhookSecret{})
 	webhookManager := &WebhookManager{
@@ -25,11 +31,12 @@ func New(db *gorm.DB) *WebhookManager {
 	}
 	pubsub.UpdateConfigEvent.Sub(webhookManager.onUpdateConfig)
 	pubsub.HealthCheckEvent.Sub(webhookManager.onHealthCheck)
+	pubsub.DeployEvent.Sub(webhookManager.onDeployEvent)
 	return webhookManager
 }
 
 func (m *WebhookManager) onUpdateConfig(event pubsub.UpdateConfig) {
-	webhooks, err := m.GetWebhooksByEvent("poi")
+	webhooks, err := m.GetWebhooksByEvent(NEW_CONFIG)
 
 	if err != nil {
 		pubsub.SystemEvent.Pub(pubsub.System{
@@ -50,7 +57,7 @@ func (m *WebhookManager) onHealthCheck(event pubsub.HealthCheck) {
 		pre = 200
 	}
 	if pre < 400 && 400 <= event.Status {
-		webhooks, err := m.GetWebhooksByEvent("po")
+		webhooks, err := m.GetWebhooksByEvent(HEALTH_CHECK)
 		if err != nil {
 			pubsub.SystemEvent.Pub(pubsub.System{
 				Time:    time.Now(),
@@ -67,7 +74,7 @@ func (m *WebhookManager) onHealthCheck(event pubsub.HealthCheck) {
 	}
 
 	if pre > 400 && 400 > event.Status {
-		webhooks, err := m.GetWebhooksByEvent("po")
+		webhooks, err := m.GetWebhooksByEvent(HEALTH_CHECK)
 		if err != nil {
 			pubsub.SystemEvent.Pub(pubsub.System{
 				Time:    time.Now(),
@@ -82,6 +89,22 @@ func (m *WebhookManager) onHealthCheck(event pubsub.HealthCheck) {
 	}
 
 	m.statusMap[event.Target.Proxy] = event.Status
+}
+
+func (m *WebhookManager) onDeployEvent(event pubsub.Deploy) {
+	webhooks, err := m.GetWebhooksByEvent(DEPLOY)
+		if err != nil {
+			pubsub.SystemEvent.Pub(pubsub.System{
+				Time:    time.Now(),
+				Type:    systemevent.ERROR,
+				Message: err.Error(),
+			})
+		}
+	message := event.Repository + " がデプロイされました"
+	fmt.Println(message)
+	for _, webhook := range webhooks {
+		go callWebhook(webhook, message)
+	}
 }
 
 func callWebhook(webhook *Webhook, message string) (*http.Response, error) {

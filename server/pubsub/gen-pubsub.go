@@ -168,3 +168,36 @@ func (ps *__GetWebhookPubSub) Pub(event GetWebhook) {
 		go f(event)
 	}
 }
+
+type __DeployPubSub struct {
+	subs map[string]func(Deploy)
+	c    chan Deploy
+}
+
+var DeployEvent = &__DeployPubSub{
+	subs: make(map[string]func(Deploy)),
+	c:    make(chan Deploy, 10),
+}
+
+func (ps *__DeployPubSub) Sub(f func(et Deploy)) string {
+	subID := randomStr(5)
+	for _, ok := ps.subs[subID]; ok; _, ok = ps.subs[subID] {
+		subID = randomStr(5)
+	}
+	ps.subs[subID] = f
+	return subID
+}
+
+func (ps *__DeployPubSub) Unsub(subscribeID string) bool {
+	if _, ok := ps.subs[subscribeID]; ok {
+		delete(ps.subs, subscribeID)
+		return true
+	}
+	return false
+}
+
+func (ps *__DeployPubSub) Pub(event Deploy) {
+	for _, f := range ps.subs {
+		go f(event)
+	}
+}
