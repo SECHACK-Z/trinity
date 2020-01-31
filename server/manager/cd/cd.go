@@ -93,7 +93,7 @@ func (m *CDManager) run(repository string, target *targetContext) {
 			pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.ERROR, Message: "Failed to exec command"})
 			return
 		}
-
+		pubsub.DeployEvent.Pub(pubsub.Deploy{Repository: repository})
 		<-target.ctx.Done()
 		pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.KILL_RECEIVED})
 		if err := cmd.Process.Kill(); err != nil {
@@ -117,6 +117,7 @@ func (m *CDManager) run(repository string, target *targetContext) {
 			return
 		}
 		pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.APPLICATION_START})
+		pubsub.DeployEvent.Pub(pubsub.Deploy{Repository: repository})
 
 		<-target.ctx.Done()
 		pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.KILL_RECEIVED})

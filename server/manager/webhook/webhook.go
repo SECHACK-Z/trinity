@@ -25,6 +25,7 @@ func New(db *gorm.DB) *WebhookManager {
 	}
 	pubsub.UpdateConfigEvent.Sub(webhookManager.onUpdateConfig)
 	pubsub.HealthCheckEvent.Sub(webhookManager.onHealthCheck)
+	pubsub.DeployEvent.Sub(webhookManager.onDeployEvent)
 	return webhookManager
 }
 
@@ -82,6 +83,22 @@ func (m *WebhookManager) onHealthCheck(event pubsub.HealthCheck) {
 	}
 
 	m.statusMap[event.Target.Proxy] = event.Status
+}
+
+func (m *WebhookManager) onDeployEvent(event pubsub.Deploy) {
+	webhooks, err := m.GetWebhooksByEvent("po")
+		if err != nil {
+			pubsub.SystemEvent.Pub(pubsub.System{
+				Time:    time.Now(),
+				Type:    systemevent.ERROR,
+				Message: err.Error(),
+			})
+		}
+	message := event.Repository + " がデプロイされました"
+	fmt.Println(message)
+	for _, webhook := range webhooks {
+		go callWebhook(webhook, message)
+	}
 }
 
 func callWebhook(webhook *Webhook, message string) (*http.Response, error) {

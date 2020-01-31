@@ -32,3 +32,7 @@ type HealthCheck struct {
 type GetWebhook struct {
 	Repository string
 }
+
+type Deploy struct {
+	Repository string
+}
