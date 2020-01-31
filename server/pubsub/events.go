@@ -35,4 +35,5 @@ type GetWebhook struct {
 
 type Deploy struct {
 	Repository string
+	Type       string
 }

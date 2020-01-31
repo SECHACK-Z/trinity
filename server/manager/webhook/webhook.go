@@ -19,8 +19,8 @@ type WebhookManager struct {
 
 const (
 	HEALTH_CHECK string = "HEALTH_CHECK"
-	NEW_CONFIG string = "NEW_CONFIG"
-	DEPLOY string = "DEPLOY"
+	NEW_CONFIG   string = "NEW_CONFIG"
+	DEPLOY       string = "DEPLOY"
 )
 
 func New(db *gorm.DB) *WebhookManager {
@@ -93,14 +93,14 @@ func (m *WebhookManager) onHealthCheck(event pubsub.HealthCheck) {
 
 func (m *WebhookManager) onDeployEvent(event pubsub.Deploy) {
 	webhooks, err := m.GetWebhooksByEvent(DEPLOY)
-		if err != nil {
-			pubsub.SystemEvent.Pub(pubsub.System{
-				Time:    time.Now(),
-				Type:    systemevent.ERROR,
-				Message: err.Error(),
-			})
-		}
-	message := event.Repository + " がデプロイされました"
+	if err != nil {
+		pubsub.SystemEvent.Pub(pubsub.System{
+			Time:    time.Now(),
+			Type:    systemevent.ERROR,
+			Message: err.Error(),
+		})
+	}
+	message := event.Repository + event.Type
 	fmt.Println(message)
 	for _, webhook := range webhooks {
 		go callWebhook(webhook, message)
