@@ -100,7 +100,7 @@ func (m *WebhookManager) onDeployEvent(event pubsub.Deploy) {
 			Message: err.Error(),
 		})
 	}
-	message := event.Repository + event.Type
+	message := event.Repository + " " + event.Type
 	fmt.Println(message)
 	for _, webhook := range webhooks {
 		go callWebhook(webhook, message)

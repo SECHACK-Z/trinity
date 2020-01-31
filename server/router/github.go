@@ -29,7 +29,7 @@ func (r *router) postGitHubWebhook(c echo.Context) error {
 		for _, target := range r.manager.Config.Get().Targets {
 			if target.Repository == URL && "master" == branch {
 				message := fmt.Sprintf("New commit is pushed on %s at %s\n", branch, URL)
-				pubsub.DeployEvent.Pub(pubsub.Deploy{Repository: URL, Type: "がデプロイされました"})
+				pubsub.DeployEvent.Pub(pubsub.Deploy{Repository: URL, Type: "がpushされました"})
 				pubsub.SystemEvent.Pub(pubsub.System{Time: time.Now(), Type: systemevent.REPOSITORY_UPDATED, Message: message})
 				pubsub.GetWebhookEvent.Pub(pubsub.GetWebhook{Repository: URL})
 				return c.NoContent(200)
