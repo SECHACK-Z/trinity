@@ -2,22 +2,22 @@
   <div class="app-container">
     <el-form :model="webhook" label-width="120px">
       <el-form-item label="URL">
-        <el-input v-model="webhook.url" />
+        <el-input v-model="webhook.url" @blur="webhook.url=webhook.url.trim()" />
       </el-form-item>
       <el-form-item label="Body">
-        <el-input v-model="webhook.body" />
+        <el-input v-model="webhook.body" @blur="webhook.body=webhook.body.trim()" />
       </el-form-item>
       <el-form-item v-for="(header, idx) in webhook.header" :key="idx" label="Header">
-        <el-input v-model="header.key" />
-        <el-input v-model="header.value" />
+        <el-input v-model="header.key" @blur="header.key=header.key.trim()" />
+        <el-input v-model="header.value" @blur="header.value=header.value.trim()" />
         <el-button @click="deleteHeader(idx)">Delete Header</el-button>
       </el-form-item>
       <el-form-item>
         <el-button @click="addHeader">New Header</el-button>
       </el-form-item>
       <el-form-item v-for="(secret, idx) in webhook.secrets" :key="idx" label="Secrets">
-        <el-input v-model="secret.place_holder" />
-        <el-input v-model="secret.secret" />
+        <el-input v-model="secret.place_holder" @blur="secret.place_holder=secret.place_holder.trim()" />
+        <el-input v-model="secret.secret" @blur="secret.secret=secret.secret.trim()" />
         <el-button @click="deleteSecret(idx)">Delete Secret</el-button>
       </el-form-item>
       <el-form-item>
