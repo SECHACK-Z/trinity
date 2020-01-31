@@ -68,7 +68,7 @@ export default {
     return {
       webhookID: '',
       webhook: {},
-      allOptions: ['poi', 'po']
+      allOptions: ['HEALTH_CHECK', 'NEW_CONFIG', 'DEPLOY']
     }
   },
   computed: {

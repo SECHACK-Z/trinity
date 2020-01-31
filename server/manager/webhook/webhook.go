@@ -15,7 +15,16 @@ import (
 type WebhookManager struct {
 	db        *gorm.DB
 	statusMap map[string]int
+	eventType eventType
 }
+
+type eventType string
+
+const (
+	HEALTH_CHECK eventType = "HEALTH_CHECK"
+	NEW_CONFIG eventType = "NEW_CONFIG"
+	DEPLOY eventType = "DEPLOY"
+)
 
 func New(db *gorm.DB) *WebhookManager {
 	db.AutoMigrate(&Webhook{}, &WebhookEvent{}, &WebhookSecret{})
@@ -30,7 +39,7 @@ func New(db *gorm.DB) *WebhookManager {
 }
 
 func (m *WebhookManager) onUpdateConfig(event pubsub.UpdateConfig) {
-	webhooks, err := m.GetWebhooksByEvent("poi")
+	webhooks, err := m.GetWebhooksByEvent(m.eventType.NEW_CONFIG)
 
 	if err != nil {
 		pubsub.SystemEvent.Pub(pubsub.System{
@@ -51,7 +60,7 @@ func (m *WebhookManager) onHealthCheck(event pubsub.HealthCheck) {
 		pre = 200
 	}
 	if pre < 400 && 400 <= event.Status {
-		webhooks, err := m.GetWebhooksByEvent("po")
+		webhooks, err := m.GetWebhooksByEvent(m.eventType.HEALTH_CHECK)
 		if err != nil {
 			pubsub.SystemEvent.Pub(pubsub.System{
 				Time:    time.Now(),
@@ -68,7 +77,7 @@ func (m *WebhookManager) onHealthCheck(event pubsub.HealthCheck) {
 	}
 
 	if pre > 400 && 400 > event.Status {
-		webhooks, err := m.GetWebhooksByEvent("po")
+		webhooks, err := m.GetWebhooksByEvent(m.eventType.HEALTH_CHECK)
 		if err != nil {
 			pubsub.SystemEvent.Pub(pubsub.System{
 				Time:    time.Now(),
@@ -86,7 +95,7 @@ func (m *WebhookManager) onHealthCheck(event pubsub.HealthCheck) {
 }
 
 func (m *WebhookManager) onDeployEvent(event pubsub.Deploy) {
-	webhooks, err := m.GetWebhooksByEvent("po")
+	webhooks, err := m.GetWebhooksByEvent(m.eventType.DEPLOY)
 		if err != nil {
 			pubsub.SystemEvent.Pub(pubsub.System{
 				Time:    time.Now(),
