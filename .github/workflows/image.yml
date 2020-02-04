@@ -17,6 +17,6 @@ jobs:
       - name: Login GitHub Registry
         run: docker login docker.pkg.github.com -u SECHACK-Z -p ${{ secrets.GITHUB_TOKEN }}
       - name: Build Image
-        run: docker build -t docker.pkg.github.com/sechack-z/reverse-proxy/${IMAGE_NAME}:${IMAGE_TAG} .
+        run: docker build -t docker.pkg.github.com/sechack-z/trinity/${IMAGE_NAME}:${IMAGE_TAG} .
       - name: Push image to GitHub Registry
-        run: docker push docker.pkg.github.com/sechack-z/reverse-proxy/${IMAGE_NAME}:${IMAGE_TAG}
+        run: docker push docker.pkg.github.com/sechack-z/trinity/${IMAGE_NAME}:${IMAGE_TAG}
