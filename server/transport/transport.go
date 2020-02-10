@@ -24,6 +24,9 @@ func (t *myTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	elapsed := time.Since(start)
 	log.Println("Response Time:", elapsed.Nanoseconds())
 
-	pubsub.AccessEvent.Pub(pubsub.Access{req, response, elapsed})
+	go func() {
+		<-req.Context().Done()
+		pubsub.AccessEvent.Pub(pubsub.Access{req, response, elapsed})
+	}()
 	return response, nil
 }
