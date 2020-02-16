@@ -17,8 +17,6 @@ Trinityは
 を搭載しており、個人開発者の負荷を減らします。
 
 
-## Getting Started
-ダウンロードして使ってみたい場合、[GitHub - Releases]()からダウンロードしてください。
 
 ### Prerequisites
 ローカルでビルドする場合
@@ -32,5 +30,79 @@ Trinityは
 > make
 ```
 
-<!-- ### Installing
-バイナリを任意の場所においてください。 -->
+## Requirements and Setup
+[GitHub - Releases]()からダウンロードして試すことができます。
+
+もしくは、手元でのビルドを試してください。
+
+### Cloning the Repo
+まずこのリポジトリをクローンしてください。
+
+```sh
+git clone git@github.com:sechack-z/trinity
+```
+
+ディレクトリに移動してください。
+```sh
+cd trinity
+```
+
+### Build as single binary
+Trinityをかんたんに動かすために、シングルバイナリでのビルドをできるようにしました。
+
+#### Install Dependencies.
+- Node.js (above v12.4)
+- Go (above v1.11)
+- [rakyll/tatik](https://github.com/rakyll/statik)
+    - シングルバイナリ化に使用   
+- make
+
+リポジトリのルートで`make`コマンドを使用してください。
+```sh 
+make build
+```
+もしくは、serverとclientそれぞれをビルドすることができます
+### Client 
+Clientは`client`ディレクトリに格納されています。
+```
+cd client
+```
+#### Node.js
+Clientは[Node.js](https://nodejs.org/en/)で書かれています。
+ビルドのために、`Node.js`をインストールしてください。
+**Note**: `Node.js v12.4`で検証されていますが、いくつか問題があるかもしれません。何か問題が発生した場合、`v12.4`へのアップデートを検討してください。
+
+
+#### Installing Dependencies
+Yarnと呼ばれるパッケージマネージャを使用しています。
+続けるにはYarnをインストールしてください。
+
+依存パッケージをインストールしてください。
+```sh
+yarn
+```
+
+#### Building Client
+Clientをビルドします。
+```sh
+yarn build:stage
+```
+
+
+### Server
+Serverは`server`ディレクトリに格納されています。
+#### Go
+Serverは[Go](https://golang.org)で書かれています。
+ビルドのために、`Go`をインストールしてください。
+**Note**: `Go v1.11`で検証されていますが、いくつか問題があるかもしれません。何か問題が発生した場合、`v1.11`へのアップデートを検討してください。
+
+
+#### Installing Dependencies
+`Go modules`を使用しています。
+そのため、ビルド時に依存パッケージは自動的にダウンロードされます。
+
+#### Building Server
+```sh
+go build
+```
+
